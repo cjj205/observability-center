@@ -1,0 +1,19 @@
+{
+  "name": "openan-plugin-observation-center",
+  "private": true,
+  "version": "1.19.5",
+  "type": "module",
+  "description": "OpenAN Portal 观测中心插件 — 指标观测（内嵌 Langfuse Website）",
+  "scripts": {
+    "dev": "vite --host",
+    "build:plugin": "vite build --config vite.bundle.config.js && node scripts/gen-mock-tasks.mjs"
+  },
+  "dependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.3.4",
+    "vite": "^5.4.11"
+  }
+}
