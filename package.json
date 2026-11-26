@@ -6,7 +6,8 @@
   "description": "OpenAN Portal 观测中心插件 — 指标观测（内嵌 Langfuse Website）",
   "scripts": {
     "dev": "vite --host",
-    "build:plugin": "vite build --config vite.bundle.config.js && node scripts/gen-mock-tasks.mjs"
+    "build:plugin": "vite build --config vite.bundle.config.js && node scripts/gen-mock-tasks.mjs",
+    "query-service": "python observability-query-service/server.py"
   },
   "dependencies": {
     "react": "^18.3.1",

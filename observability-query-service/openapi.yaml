@@ -1,47 +1,36 @@
 openapi: 3.0.3
 info:
-  title: OpenAN Observability Query Service
+  title: OpenAN Observability Workflow Query Service
   version: 0.1.0
-  description: Read-only aggregation API for Portal collaboration observability.
+  description: Read-only workflow observability API with OTLP-compatible trace and log responses.
 paths:
   /healthz:
     get:
-      summary: Service and source health
+      summary: Check service and backend source health
       responses:
         '200':
-          description: Health status
-  /api/v1/observability/tasks:
-    get:
-      summary: List collaboration tasks
-      parameters:
-        - in: query
-          name: from
-          schema: { type: string, format: date-time }
-        - in: query
-          name: to
-          schema: { type: string, format: date-time }
-        - in: query
-          name: status
-          schema: { type: string, enum: [success, error] }
-        - in: query
-          name: taskType
-          schema: { type: string }
-        - in: query
-          name: limit
-          schema: { type: integer, minimum: 1, maximum: 100, default: 20 }
-        - in: query
-          name: cursor
-          schema: { type: string }
-      responses:
-        '200':
-          description: A page of task summaries
+          description: Service health
           content:
             application/json:
-              schema:
-                $ref: '#/components/schemas/TaskPage'
-  /api/v1/observability/tasks/{runId}:
+              schema: { $ref: '#/components/schemas/HealthResponse' }
+  /api/v1/observability/workflows:
+    post:
+      summary: Search workflows
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/WorkflowQuery' }
+      responses:
+        '200':
+          description: Workflow page
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/WorkflowPage' }
+        '400': { description: Invalid request }
+  /api/v1/observability/workflows/{runId}:
     get:
-      summary: Get a normalized collaboration task
+      summary: Get a workflow with its PSOP structure
       parameters:
         - in: path
           name: runId
@@ -49,49 +38,328 @@ paths:
           schema: { type: string }
       responses:
         '200':
-          description: Task detail compatible with the Portal task view
+          description: Workflow detail
           content:
             application/json:
-              schema:
-                $ref: '#/components/schemas/TaskDetail'
-        '404': { description: Task not found }
+              schema: { $ref: '#/components/schemas/WorkflowDetail' }
+        '404': { description: Workflow not found }
+  /api/v1/observability/workflows/{runId}/trace:
+    post:
+      summary: Get the workflow trace in OTLP ExportTraceServiceRequest form
+      parameters:
+        - in: path
+          name: runId
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/TraceQuery' }
+      responses:
+        '200':
+          description: OTLP trace response
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/TraceResponse' }
+        '404': { description: Workflow not found }
+  /api/v1/observability/workflows/{runId}/logs:
+    post:
+      summary: Search workflow logs in OTLP LogRecord form
+      parameters:
+        - in: path
+          name: runId
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/LogQuery' }
+      responses:
+        '200':
+          description: OTLP log page
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/LogPage' }
+        '404': { description: Workflow not found }
+  /api/v1/observability/workflows/{runId}/metrics:
+    post:
+      summary: Get workflow metrics
+      parameters:
+        - in: path
+          name: runId
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/MetricQuery' }
+      responses:
+        '200':
+          description: Workflow metrics
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/MetricResponse' }
+        '404': { description: Workflow not found }
 components:
   schemas:
-    TaskPage:
+    SourceStatus:
       type: object
-      required: [items, nextCursor, partial, sources]
+      additionalProperties:
+        type: object
+        properties:
+          status: { type: string, enum: [ready, empty, partial, unavailable] }
+    HealthResponse:
+      type: object
+      required: [status, sources]
       properties:
-        items:
-          type: array
-          items: { $ref: '#/components/schemas/TaskSummary' }
-        nextCursor: { type: string, nullable: true }
-        partial: { type: boolean }
-        sources: { $ref: '#/components/schemas/Sources' }
-    TaskSummary:
+        status: { type: string, enum: [ready, degraded, unavailable] }
+        sources: { $ref: '#/components/schemas/SourceStatus' }
+    WorkflowQuery:
       type: object
-      required: [runId, status, startedAt, durationMs, traceId]
+      properties:
+        from: { type: string, format: date-time }
+        to: { type: string, format: date-time }
+        status: { type: string, enum: [all, success, error], default: all }
+        workflowType: { type: string }
+        keyword: { type: string, description: Fuzzy search over runId, workflowId, workflowType, and name }
+        sort: { type: string, enum: [startedAt, durationMs], default: startedAt }
+        order: { type: string, enum: [asc, desc], default: desc }
+        limit: { type: integer, minimum: 1, maximum: 100, default: 20 }
+        cursor: { type: string }
+    WorkflowSummary:
+      type: object
+      required: [runId, workflowId, workflowType, name, status, startedAt, durationMs, spanCount, traceId]
       properties:
         runId: { type: string }
-        taskId: { type: string }
-        taskType: { type: string }
+        workflowId: { type: string }
+        workflowType: { type: string }
+        name: { type: string }
         status: { type: string, enum: [success, error] }
         startedAt: { type: string, format: date-time }
         durationMs: { type: integer, format: int64 }
+        spanCount: { type: integer }
         traceId: { type: string }
-    TaskDetail:
-      allOf:
-        - $ref: '#/components/schemas/TaskSummary'
-        - type: object
-          required: [trace, logs, signals, partial, sources]
+    WorkflowPage:
+      type: object
+      required: [items, nextCursor, aggregates, facets, meta, partial, sourceStatus]
+      properties:
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/WorkflowSummary' }
+        nextCursor: { type: string, nullable: true }
+        aggregates:
+          type: object
+          required: [total, success, error, successRate, avgDurationMs]
           properties:
-            trace: { type: object, description: Normalized Jaeger spans }
-            logs: { type: array, items: { type: object } }
-            signals: { type: array, items: { type: object } }
+            total: { type: integer }
+            success: { type: integer }
+            error: { type: integer }
+            successRate: { type: number }
+            avgDurationMs: { type: integer, format: int64 }
+        facets:
+          type: object
+          properties:
+            workflowTypes:
+              type: array
+              items:
+                type: object
+                properties:
+                  value: { type: string }
+                  count: { type: integer }
+        meta:
+          type: object
+          properties:
+            dataset: { type: string }
+            source: { type: string }
+            generatedAt: { type: string, format: date-time }
+        partial: { type: boolean }
+        sourceStatus: { $ref: '#/components/schemas/SourceStatus' }
+    PsopStep:
+      type: object
+      required: [name, type, subtasks, next]
+      properties:
+        name: { type: string }
+        type: { type: string }
+        subtasks:
+          type: array
+          items:
+            type: object
+            properties:
+              description: { type: string }
+              agent: { type: string }
+              skill: { type: string }
+        next:
+          type: array
+          items:
+            type: object
+            properties:
+              step: { type: string }
+              condition: { type: string }
+    Psop:
+      type: object
+      required: [id, name, description, steps]
+      properties:
+        id: { type: string }
+        name: { type: string }
+        description: { type: string }
+        steps:
+          type: array
+          items: { $ref: '#/components/schemas/PsopStep' }
+    WorkflowDetail:
+      allOf:
+        - $ref: '#/components/schemas/WorkflowSummary'
+        - type: object
+          required: [psop, partial, sourceStatus]
+          properties:
+            psop: { $ref: '#/components/schemas/Psop' }
             partial: { type: boolean }
-            sources: { $ref: '#/components/schemas/Sources' }
-    Sources:
+            sourceStatus: { $ref: '#/components/schemas/SourceStatus' }
+    TraceQuery:
       type: object
       properties:
-        trace: { type: string, enum: [ready, empty, unavailable, partial] }
-        metric: { type: string, enum: [ready, empty, unavailable, partial] }
-        log: { type: string, enum: [ready, empty, unavailable, partial] }
+        spanId: { type: string }
+        includeAttributes: { type: boolean, default: true }
+        includeEvents: { type: boolean, default: true }
+        includeLinks: { type: boolean, default: true }
+    Attribute:
+      type: object
+      required: [key, value]
+      properties:
+        key: { type: string }
+        value:
+          type: object
+          description: OTLP AnyValue
+          additionalProperties: true
+    TraceSpan:
+      type: object
+      required: [traceId, spanId, parentSpanId, name, kind, startTimeUnixNano, endTimeUnixNano]
+      properties:
+        traceId: { type: string }
+        spanId: { type: string }
+        parentSpanId: { type: string }
+        name: { type: string }
+        kind: { type: string }
+        startTimeUnixNano: { type: string }
+        endTimeUnixNano: { type: string }
+        attributes:
+          type: array
+          items: { $ref: '#/components/schemas/Attribute' }
+        status:
+          type: object
+          properties:
+            code: { type: string }
+            message: { type: string }
+        events:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+        links:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+    TraceResponse:
+      type: object
+      required: [resourceSpans, partial, sourceStatus]
+      properties:
+        resourceSpans:
+          type: array
+          items:
+            type: object
+            required: [resource, scopeSpans]
+            properties:
+              resource:
+                type: object
+                properties:
+                  attributes:
+                    type: array
+                    items: { $ref: '#/components/schemas/Attribute' }
+              scopeSpans:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    scope:
+                      type: object
+                      properties:
+                        name: { type: string }
+                        version: { type: string }
+                    spans:
+                      type: array
+                      items: { $ref: '#/components/schemas/TraceSpan' }
+        partial: { type: boolean }
+        sourceStatus: { $ref: '#/components/schemas/SourceStatus' }
+    LogQuery:
+      type: object
+      properties:
+        category: { type: string, enum: [message, workflow, agent] }
+        severity: { type: string, enum: [INFO, WARN, ERROR] }
+        spanId: { type: string }
+        keyword: { type: string }
+        fromOffsetMs: { type: integer, format: int64 }
+        toOffsetMs: { type: integer, format: int64 }
+        limit: { type: integer, minimum: 1, maximum: 200, default: 50 }
+        cursor: { type: string }
+    LogRecord:
+      type: object
+      required: [timeUnixNano, observedTimestampUnixNano, severityText, severityNumber, body]
+      properties:
+        timeUnixNano: { type: string }
+        observedTimestampUnixNano: { type: string }
+        severityText: { type: string }
+        severityNumber: { type: integer }
+        body:
+          type: object
+          properties:
+            stringValue: { type: string }
+        attributes:
+          type: array
+          items: { $ref: '#/components/schemas/Attribute' }
+        traceId: { type: string }
+        spanId: { type: string }
+    LogPage:
+      type: object
+      required: [items, nextCursor, total, partial, sourceStatus]
+      properties:
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/LogRecord' }
+        nextCursor: { type: string, nullable: true }
+        total: { type: integer }
+        partial: { type: boolean }
+        sourceStatus: { $ref: '#/components/schemas/SourceStatus' }
+    MetricQuery:
+      type: object
+      properties:
+        dim: { type: string, enum: [workflow, agent, message] }
+        metric: { type: string }
+        windowMin: { type: integer, default: 120 }
+        step: { type: integer, default: 15 }
+        includeCharts: { type: boolean, default: true }
+    MetricResponse:
+      type: object
+      required: [runId, workflowId, collection, summary, signals, partial, sourceStatus]
+      properties:
+        runId: { type: string }
+        workflowId: { type: string }
+        collection:
+          type: object
+          additionalProperties: true
+        summary:
+          type: object
+          additionalProperties: true
+        signals:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+        charts:
+          type: object
+          nullable: true
+          additionalProperties: true
+        partial: { type: boolean }
+        sourceStatus: { $ref: '#/components/schemas/SourceStatus' }
