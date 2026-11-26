@@ -1,5 +1,6 @@
 import React from 'react';
 import './index.css';
+import './i18n/menu-labels';
 import { useState } from 'react';
 import { useCollabTasks } from './hooks/useCollabTasks';
 import { IconRefresh } from './ui/icons';
