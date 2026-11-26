@@ -1578,6 +1578,29 @@ html.dark .obs-load-bar { background: rgba(127, 127, 127, 0.22); }
 .obs-kind-client { background: #2563eb; }
 .obs-kind-server { background: #7c3aed; }
 .obs-kind-internal { background: #64748b; }
+.obs-kind-producer { background: #f59e0b; }
+.obs-kind-consumer { background: #0d9488; }
+
+/* Trace 页签统计条（Span 总数 / 错误 Span / 协作智能体 + 一键收起/展开日志） */
+.obs-trace-logtoggle { margin-left: auto; align-self: center; }
+
+/* 属性查看器 · 选中 Span 的 SigNoz 式公共字段摘要 */
+.obs-spanmeta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 18px;
+    padding: 10px 12px;
+    margin: 0 0 12px;
+    border: 1px solid rgba(127, 127, 127, 0.25);
+    border-radius: 10px;
+    background: rgba(127, 127, 127, 0.05);
+}
+
+.obs-spanmeta-item { display: flex; flex-direction: column; gap: 2px; min-width: 130px; }
+
+.obs-spanmeta-k { font-size: 11px; opacity: 0.6; }
+
+.obs-spanmeta-v { font-size: 13px; font-weight: 700; display: inline-flex; align-items: center; gap: 6px; }
 
 .obs-wf-track {
     position: relative;
