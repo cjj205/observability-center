@@ -1,0 +1,36 @@
+{
+  "workflow-engine-sdk-java": {
+    "repository": "https://github.com/project-openan/workflow-engine-sdk-java.git",
+    "commit": "9691bbc102dc39d5214103886fa85ea8d136bee6",
+    "mavenCoordinate": "net.openan.workflow.sdk:workflow-engine:0.1.0-SNAPSHOT",
+    "note": "Installed locally because the released 0.1.1 artifact does not expose the observability builder used by this demo."
+  },
+  "a2a-t-sdk-java": {
+    "repository": "https://github.com/project-openan/a2a-t-sdk-java.git",
+    "commit": "6f286985699b2a65c03e7ae88c15e16b4f8f4e48",
+    "mavenCoordinate": "net.openan.a2a-t.sdk:*:1.1.1"
+  },
+  "a2a-java-sdk": {
+    "mavenCoordinate": "org.a2aproject.sdk:*:1.2.0.Final",
+    "modules": [
+      "a2a-java-sdk-client-transport-rest",
+      "a2a-java-sdk-server-common",
+      "a2a-java-sdk-transport-rest"
+    ]
+  },
+  "openan-demo-mockagent": {
+    "repository": "https://github.com/project-openan/openan-demo.git",
+    "commit": "f1bbd8f7e87ebdc165cad5789f859505de29cd9b",
+    "path": "mockagent"
+  },
+  "observability-sdk-java": {
+    "repository": "https://github.com/project-openan/observability-sdk-java.git",
+    "commit": "29c3e3af207f9b81e48b8cddd5174446e2bc4ef8",
+    "mavenCoordinate": "net.openan:observability-sdk:0.1.0-SNAPSHOT",
+    "note": "Use the sibling checkout or install the intended SDK commit into the local Maven repository."
+  },
+  "scenario": {
+    "source": "https://github.com/project-openan/observability-sdk-java/pull/29",
+    "workflowId": "1d4c367d-9f0c-4400-85d2-caaf21ee37af"
+  }
+}

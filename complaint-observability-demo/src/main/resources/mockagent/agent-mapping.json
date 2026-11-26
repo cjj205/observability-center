@@ -1,0 +1,38 @@
+{
+  "source": "https://github.com/project-openan/openan-demo/tree/main/mockagent",
+  "sourceCommit": "f1bbd8f7e87ebdc165cad5789f859505de29cd9b",
+  "mapping": [
+    {
+      "workflowAgent": "WAIMO Complaint Agent",
+      "mockagentCard": "mockagent_an-l4-complaint-handling-agent",
+      "mockagentAgentName": "Complaint Handling Agent",
+      "skills": [
+        "Complaint Intake and Classification",
+        "Complaint Root Cause Analysis",
+        "Complaint Resolution and Closure"
+      ]
+    },
+    {
+      "workflowAgent": "Transport Complaint Agent",
+      "mockagentCard": "mockagent_an-l4-transport-network-fault-management-agent",
+      "mockagentAgentName": "Transport Network Fault Management Agent",
+      "skills": [
+        "Transport Network Fault Identification",
+        "Transport Network Fault Diagnosis",
+        "Transport Network Fault Handling"
+      ]
+    },
+    {
+      "workflowAgent": "West-GD NETSpirit",
+      "mockagentCard": "mockagent_fault-diagnosis-stub",
+      "mockagentAgentName": "Fault Diagnosis Stub",
+      "purpose": "Deterministic regional diagnosis and authorization fixture"
+    },
+    {
+      "workflowAgent": "East-GD NETSpirit",
+      "mockagentCard": "mockagent_fault-diagnosis-stub",
+      "mockagentAgentName": "Fault Diagnosis Stub",
+      "purpose": "Deterministic regional diagnosis fixture"
+    }
+  ]
+}
