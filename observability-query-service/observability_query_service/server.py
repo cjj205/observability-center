@@ -19,14 +19,15 @@
 """HTTP entry point for the observability workflow query service."""
 
 import json
+import os
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import unquote, urlparse
 
-from repository import WorkflowRepository
-from service import WorkflowQueryService
+from .repository import WorkflowRepository
+from .service import WorkflowQueryService
 
 HOST = "127.0.0.1"
-PORT = 8787
+PORT = int(os.environ.get("PORT", "8787"))
 DATA_FILE = "dist-plugin/mock-collab-tasks.json"
 
 
@@ -106,9 +107,13 @@ def create_handler(service):
     return ObservabilityHandler
 
 
-if __name__ == "__main__":
+def main():
     repository = WorkflowRepository.from_workspace_file(DATA_FILE)
     query_service = WorkflowQueryService(repository)
     server = ThreadingHTTPServer((HOST, PORT), create_handler(query_service))
     print(f"Observability query service listening on http://{HOST}:{PORT}")
     server.serve_forever()
+
+
+if __name__ == "__main__":
+    main()

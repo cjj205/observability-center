@@ -4,6 +4,9 @@ dist-plugin/mock-collab-tasks.json
 # Python 运行产物
 __pycache__/
 *.pyc
+.venv/
+*.egg-info/
+uv.lock
 
 # 依赖
 node_modules/

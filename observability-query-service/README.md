@@ -41,23 +41,33 @@ Portal[OpenAN Portal 插件] -->|POST /api/v1/observability/workflows| Query[Obs
 
 ## 本地启动
 
+后端是独立的 Python 工程，与前端 npm 工具链分离，使用 uv 或 pip 启动：
+
 ```powershell
-python observability-query-service/server.py
+# 方式一：uv（推荐，自动管理虚拟环境）
+cd observability-query-service
+uv run observability-query-service
+
+# 方式二：pip
+pip install -e observability-query-service
+observability-query-service
 ```
 
-默认读取 `dist-plugin/mock-collab-tasks.json` 并在 `8787` 端口提供接口。可通过 `PORT` 调整端口。
+默认读取仓库根目录的 `dist-plugin/mock-collab-tasks.json`（由前端 `npm run build:plugin` 生成）并在 `8787` 端口提供接口。可通过 `PORT` 环境变量调整端口。
 
 ## 代码结构
 
 ```text
-server.py       HTTP 路由和请求响应处理
-service.py      查询编排、过滤、分页和排序
-repository.py   数据文件读取与 Workflow 查找
-models/         响应模型
-  workflow.py   Workflow 摘要、详情、PSOP 和聚合
-  trace.py      OTLP ExportTraceServiceRequest
-  log.py        OTLP LogRecord
-  metric.py     Metric、信号和图表
+pyproject.toml                包定义、入口命令（uv / pip 通用）
+observability_query_service/  Python 包
+  server.py                   HTTP 路由和请求响应处理
+  service.py                  查询编排、过滤、分页和排序
+  repository.py               数据文件读取与 Workflow 查找
+  models/                     响应模型
+    workflow.py               Workflow 摘要、详情、PSOP 和聚合
+    trace.py                  OTLP ExportTraceServiceRequest
+    log.py                    OTLP LogRecord
+    metric.py                 Metric、信号和图表
 ```
 
 ## 数据源配置

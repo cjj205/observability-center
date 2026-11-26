@@ -28,7 +28,7 @@ class WorkflowRepository:
 
     @classmethod
     def from_workspace_file(cls, relative_path):
-        root = Path(__file__).resolve().parent.parent
+        root = Path(__file__).resolve().parents[2]
         with (root / relative_path).open(encoding="utf-8") as file:
             return cls(json.load(file))
 

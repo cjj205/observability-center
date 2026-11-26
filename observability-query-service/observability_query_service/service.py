@@ -17,10 +17,10 @@
 
 """Application service for workflow observability queries."""
 
-from models.log import LogModel
-from models.metric import MetricModel
-from models.trace import TraceModel
-from models.workflow import WorkflowModel
+from .models.log import LogModel
+from .models.metric import MetricModel
+from .models.trace import TraceModel
+from .models.workflow import WorkflowModel
 
 
 class WorkflowQueryService:
