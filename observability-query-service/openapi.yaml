@@ -1,0 +1,97 @@
+openapi: 3.0.3
+info:
+  title: OpenAN Observability Query Service
+  version: 0.1.0
+  description: Read-only aggregation API for Portal collaboration observability.
+paths:
+  /healthz:
+    get:
+      summary: Service and source health
+      responses:
+        '200':
+          description: Health status
+  /api/v1/observability/tasks:
+    get:
+      summary: List collaboration tasks
+      parameters:
+        - in: query
+          name: from
+          schema: { type: string, format: date-time }
+        - in: query
+          name: to
+          schema: { type: string, format: date-time }
+        - in: query
+          name: status
+          schema: { type: string, enum: [success, error] }
+        - in: query
+          name: taskType
+          schema: { type: string }
+        - in: query
+          name: limit
+          schema: { type: integer, minimum: 1, maximum: 100, default: 20 }
+        - in: query
+          name: cursor
+          schema: { type: string }
+      responses:
+        '200':
+          description: A page of task summaries
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskPage'
+  /api/v1/observability/tasks/{runId}:
+    get:
+      summary: Get a normalized collaboration task
+      parameters:
+        - in: path
+          name: runId
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Task detail compatible with the Portal task view
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskDetail'
+        '404': { description: Task not found }
+components:
+  schemas:
+    TaskPage:
+      type: object
+      required: [items, nextCursor, partial, sources]
+      properties:
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/TaskSummary' }
+        nextCursor: { type: string, nullable: true }
+        partial: { type: boolean }
+        sources: { $ref: '#/components/schemas/Sources' }
+    TaskSummary:
+      type: object
+      required: [runId, status, startedAt, durationMs, traceId]
+      properties:
+        runId: { type: string }
+        taskId: { type: string }
+        taskType: { type: string }
+        status: { type: string, enum: [success, error] }
+        startedAt: { type: string, format: date-time }
+        durationMs: { type: integer, format: int64 }
+        traceId: { type: string }
+    TaskDetail:
+      allOf:
+        - $ref: '#/components/schemas/TaskSummary'
+        - type: object
+          required: [trace, logs, signals, partial, sources]
+          properties:
+            trace: { type: object, description: Normalized Jaeger spans }
+            logs: { type: array, items: { type: object } }
+            signals: { type: array, items: { type: object } }
+            partial: { type: boolean }
+            sources: { $ref: '#/components/schemas/Sources' }
+    Sources:
+      type: object
+      properties:
+        trace: { type: string, enum: [ready, empty, unavailable, partial] }
+        metric: { type: string, enum: [ready, empty, unavailable, partial] }
+        log: { type: string, enum: [ready, empty, unavailable, partial] }
