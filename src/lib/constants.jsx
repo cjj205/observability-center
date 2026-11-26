@@ -21,7 +21,10 @@ export const AGENT_LABELS = {
     'inspection-agent': '巡检执行',
 };
 
-export const SPAN_KIND_LABELS = { CLIENT: 'C', SERVER: 'S', INTERNAL: 'I' };
+export const SPAN_KIND_LABELS = { CLIENT: 'C', SERVER: 'S', INTERNAL: 'I', PRODUCER: 'P', CONSUMER: 'C' };
+
+/** Span kind 完整名称（属性查看器「类型」项显示用）。 */
+export const SPAN_KIND_NAMES = { INTERNAL: 'Internal', CLIENT: 'Client', SERVER: 'Server', PRODUCER: 'Provider', CONSUMER: 'Consumer' };
 
 export const DEFAULT_DATA_URL = '/plugins/observation-center/mock-collab-tasks.json';
 

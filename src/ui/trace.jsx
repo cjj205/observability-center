@@ -13,6 +13,8 @@ export function TraceContent({ task }) {
         id: s.spanID,
         attrs: s.tags || {},
         spanRef: s,
+        totalMs: Math.max(task.durationMs, 1),
+        traceStartISO: task.startedAt,
     });
     const selLog = (l) => setSel({
         kind: 'log',

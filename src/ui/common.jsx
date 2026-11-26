@@ -13,7 +13,9 @@ export function StatusPill({ status }) {
 }
 
 export function KindBadge({ kind }) {
-    return <span className={`obs-kind obs-kind-${kind}`}>{SPAN_KIND_LABELS[kind] || 'S'}</span>;
+    // 类名统一小写（obs-kind-client 等），与 index.css 配色规则一一对应；
+    // PRODUCER/CONSUMER 字母无专属映射时回退首字母。
+    return <span className={`obs-kind obs-kind-${(kind || 'INTERNAL').toLowerCase()}`}>{SPAN_KIND_LABELS[kind] || (kind || '?').charAt(0)}</span>;
 }
 
 export function SummaryChips({ tasks }) {
