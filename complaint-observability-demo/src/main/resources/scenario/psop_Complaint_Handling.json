@@ -1,0 +1,63 @@
+{
+  "id": "1d4c367d-9f0c-4400-85d2-caaf21ee37af",
+  "name": "IG1504D_AN_L4_Enterprise_Private_Line_Complaint_Handling_Solution_Package",
+  "description": "Executable grouping of the PR #29 enterprise private-line complaint workflow",
+  "steps": [
+    {
+      "name": "step1",
+      "type": "SelfLoop",
+      "subtasks": [
+        {"description": "投诉受理：从流程中心抓取跨地市专线SLA劣化投诉工单，完成投诉受理", "agent": "WAIMO Complaint Agent", "skill": "Complaint Ticket Intake"}
+      ],
+      "next": [{"step": "step2", "condition": ""}]
+    },
+    {
+      "name": "step2",
+      "type": "SelfLoop",
+      "subtasks": [
+        {"description": "投诉识别：识别投诉现象与投诉意图，判定为传输专线质差投诉场景", "agent": "WAIMO Complaint Agent", "skill": "Complaint Intent Recognition"}
+      ],
+      "next": [{"step": "step3", "condition": ""}]
+    },
+    {
+      "name": "step3",
+      "type": "SelfLoop",
+      "subtasks": [
+        {"description": "定界定位：核查专线业务状态与网络情况，输出传输大网线路问题", "agent": "WAIMO Complaint Agent", "skill": "Complaint Localization"}
+      ],
+      "next": [{"step": "step4", "condition": "定界结论为传输大网线路问题"}]
+    },
+    {
+      "name": "step4",
+      "type": "AllSuccess",
+      "subtasks": [
+        {"description": "根因定位：传输工作台并发调度粤东、粤西SPN网络智能，汇总故障根因和修复建议", "agent": "Transport Complaint Agent", "skill": "Leased-Line Complaint Diagnosis"}
+      ],
+      "next": [{"step": "step5", "condition": ""}]
+    },
+    {
+      "name": "step5",
+      "type": "AllSuccess",
+      "subtasks": [
+        {"description": "问题处置：确认自动抢通，完成动网操作授权并执行隧道调优", "agent": "Transport Complaint Agent", "skill": "Complaint Handling Dispatch"}
+      ],
+      "next": [{"step": "step6", "condition": "业务自动抢通执行成功"}]
+    },
+    {
+      "name": "step6",
+      "type": "AllSuccess",
+      "subtasks": [
+        {"description": "修复验证：周期查询专线业务SLA信息，确认带宽、时延和丢包指标恢复正常", "agent": "Transport Complaint Agent", "skill": "Service SLA Verification"}
+      ],
+      "next": [{"step": "step7", "condition": "SLA指标恢复正常"}]
+    },
+    {
+      "name": "step7",
+      "type": "SelfLoop",
+      "subtasks": [
+        {"description": "投诉报结：客户回访确认问题已解决，投诉工单闭环", "agent": "WAIMO Complaint Agent", "skill": "Complaint Closure"}
+      ],
+      "next": [{"step": "end", "condition": ""}]
+    }
+  ]
+}

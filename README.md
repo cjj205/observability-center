@@ -64,6 +64,8 @@ Langfuse 内嵌视图已按需求移除；Langfuse 仍可从「三方可观测�
   Agent 5）；采样值与图表见 Metric 页签。
 
 真实栈接入后注入 `window.__OPENAN_OBS_DATA_URL__` 切换实时数据。
+统一查询服务的接口边界和首批 API 定义见
+[`observability-query-service/`](observability-query-service/)。
 
 ### 字体规范
 
