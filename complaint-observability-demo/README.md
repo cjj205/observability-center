@@ -74,6 +74,17 @@ Set-Location <observability-center-clone>\complaint-observability-demo
 .\scripts\run-four-jvm.ps1 -Case authorization-denied -RunId complaint-four-denied-001
 ```
 
+Linux 使用原生 Bash 入口，不依赖 PowerShell 或 WSL。安装 JDK 17、Maven、Python 3、`curl` 和 Docker Compose 后，执行：
+
+```bash
+chmod +x scripts/linux/*.sh
+scripts/linux/start-storage.sh
+ENABLE_TELEMETRY=true scripts/linux/run-four-jvm.sh success complaint-linux-four-001
+scripts/linux/stop-storage.sh
+```
+
+`run-four-jvm.sh` 会启动 West、East、Transport、WAIMO 四个 JVM，等待 AgentCard，运行并验收成功或授权拒绝分支，再以 HTTP shutdown 停止角色进程。`start-storage.sh` 与 `stop-storage.sh` 直接调用 Linux Docker Compose。
+
 脚本会先构建运行时 classpath，按顺序等待四张 AgentCard 就绪，工作流结束后通过 `/admin/shutdown` 让各角色写出
 `artifacts/<run_id>.<role>.json`。`verify-multiprocess.ps1` 会检查七步/五步终态、跨 JVM 的诊断并发窗口、授权拒绝分支和各角色记录。
 

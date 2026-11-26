@@ -24,7 +24,15 @@ param(
 
 $ErrorActionPreference = 'Stop'
 $demoRoot = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
-$storageRoot = (Resolve-Path (Join-Path $demoRoot '..\observability-sdk-java\deploy\local-storage')).Path
+$storageCandidates = @(
+    (Join-Path $demoRoot '..\observability-sdk-java\deploy\local-storage'),
+    (Join-Path $demoRoot '..\..\observability-sdk-java\deploy\local-storage')
+)
+$storageRoot = $storageCandidates | Where-Object { Test-Path -LiteralPath $_ } | Select-Object -First 1
+if ($null -eq $storageRoot) {
+    throw "Cannot locate observability-sdk-java local-storage. Checked: $($storageCandidates -join ', ')"
+}
+$storageRoot = (Resolve-Path -LiteralPath $storageRoot).Path
 $composePath = Join-Path $storageRoot 'compose.yaml'
 $docker = Get-Command docker -ErrorAction SilentlyContinue
 $keepAlivePath = Join-Path $demoRoot 'target\local-storage-wsl.pid'
