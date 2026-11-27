@@ -1,13 +1,14 @@
-# Observability Query Service
+# Observability Workflow Query Service
 
-面向 OpenAN Portal 的统一只读查询服务。它把 Prometheus、Jaeger 和 OpenSearch 的各自查询协议收敛为一份协作任务视图，Portal 不直接访问三类存储，也不保存其账号或地址。
+面向 OpenAN Portal 的统一只读查询服务。它把 Prometheus、Jaeger 和 OpenSearch 的各自查询协议收敛为 Workflow 视图；Trace 与 Log 响应保持 OTLP 结构，Portal 不直接访问三类存储，也不保存其账号或地址。
 
 ## 第一阶段范围
 
-- 以 `run_id` 为协作任务主键，返回 Portal 现有页面所需的任务列表和单个任务详情；
-- Trace 从 Jaeger 读取，以 `run_id`、`gen_ai.agent.a2at.task.object` 和 `task_id` 定位；
-- Metric 从 Prometheus 读取，以任务时间窗和受控的指标白名单聚合；
-- Log 从 OpenSearch 读取，以 `run_id`/`task_id` 查询，并用 `trace_id`、`span_id` 关联到 Trace；
+- 以 `runId` 为 Workflow 资源主键，返回 Workflow 列表、详情、Trace、Log 和 Metric；
+- 详情返回 PSOP 原始结构；
+- Trace 返回 OTLP `ExportTraceServiceRequest`；
+- Log 返回 OTLP `LogRecord`；
+- Metric 返回白名单聚合后的 Workflow 指标；
 - 故障时返回分数据源状态，避免把“部分数据暂不可用”显示成“任务不存在”。
 
 不包含写入、删除、原始 PromQL / DSL 透传、跨租户聚合和鉴权对接；这些需要 Portal 的身份与租户模型明确后再加入。
@@ -16,7 +17,7 @@
 
 ```mermaid
 flowchart LR
-  Portal[OpenAN Portal 插件] -->|GET /api/v1/observability/tasks| Query[Observability Query Service]
+Portal[OpenAN Portal 插件] -->|POST /api/v1/observability/workflows| Query[Observability Workflow Query Service]
   Query -->|PromQL 白名单| Prometheus[Prometheus / Thanos]
   Query -->|Trace API| Jaeger[Jaeger]
   Query -->|DSL 模板| OpenSearch[OpenSearch]
@@ -30,10 +31,44 @@ flowchart LR
 | 方法 | 路径 | 说明 |
 | --- | --- | --- |
 | `GET` | `/healthz` | 服务及三类数据源连通性 |
-| `GET` | `/api/v1/observability/tasks` | 按时间、状态、任务类型分页列出协作任务 |
-| `GET` | `/api/v1/observability/tasks/{runId}` | 返回与 Portal `mock-collab-tasks.json` 兼容的单任务对象 |
+| `POST` | `/api/v1/observability/workflows` | 查询 Workflow 列表 |
+| `GET` | `/api/v1/observability/workflows/{runId}` | 查询 Workflow 详情，`steps` 为 PSOP 结构 |
+| `POST` | `/api/v1/observability/workflows/{runId}/trace` | 查询 OTLP Trace |
+| `POST` | `/api/v1/observability/workflows/{runId}/logs` | 查询 OTLP Log |
+| `POST` | `/api/v1/observability/workflows/{runId}/metrics` | 查询 Workflow Metric |
 
-详情响应保留 `sources` 字段：`ready`、`empty`、`unavailable` 或 `partial`。只有三类查询均成功且数据完整时，任务详情的 `partial` 为 `false`。
+详情响应保留 `sourceStatus` 字段：`ready`、`empty`、`unavailable` 或 `partial`。只有三类查询均成功且数据完整时，Workflow 详情的 `partial` 为 `false`。
+
+## 本地启动
+
+后端是独立的 Python 工程，与前端 npm 工具链分离，使用 uv 或 pip 启动：
+
+```powershell
+# 方式一：uv（推荐，自动管理虚拟环境）
+cd observability-query-service
+uv run observability-query-service
+
+# 方式二：pip
+pip install -e observability-query-service
+observability-query-service
+```
+
+默认读取仓库根目录的 `dist-plugin/mock-collab-tasks.json`（由前端 `npm run build:plugin` 生成）并在 `8787` 端口提供接口。可通过 `PORT` 环境变量调整端口。
+
+## 代码结构
+
+```text
+pyproject.toml                包定义、入口命令（uv / pip 通用）
+observability_query_service/  Python 包
+  server.py                   HTTP 路由和请求响应处理
+  service.py                  查询编排、过滤、分页和排序
+  repository.py               数据文件读取与 Workflow 查找
+  models/                     响应模型
+    workflow.py               Workflow 摘要、详情、PSOP 和聚合
+    trace.py                  OTLP ExportTraceServiceRequest
+    log.py                    OTLP LogRecord
+    metric.py                 Metric、信号和图表
+```
 
 ## 数据源配置
 

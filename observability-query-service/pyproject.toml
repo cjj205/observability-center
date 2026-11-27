@@ -1,0 +1,18 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "observability-query-service"
+version = "0.1.0"
+description = "Read-only workflow observability query service for the OpenAN Portal"
+readme = "README.md"
+license = { text = "Apache-2.0" }
+requires-python = ">=3.9"
+dependencies = []
+
+[project.scripts]
+observability-query-service = "observability_query_service.server:main"
+
+[tool.setuptools.packages.find]
+include = ["observability_query_service*"]
