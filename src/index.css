@@ -515,11 +515,26 @@
     min-width: 860px;
 }
 
+/* 列表容器是唯一的 grid：列轨道在这里统一定义并跨所有行取最大内容宽。
+   每一行通过 subgrid 继承同一套轨道——表头和数据行因此天然对齐，
+   max-content 会同时考虑表头文字与各数据行内容。 */
+.obs-task-list {
+    display: grid;
+    grid-template-columns: minmax(150px, 1fr) max-content minmax(130px, 1fr) max-content max-content max-content max-content minmax(20px, max-content);
+    column-gap: 8px;
+    row-gap: 2px;
+    min-width: 720px;
+}
+
+/* 跳转箭头列：subgrid 下固定 px 轨道会被内容压扁，这里保证最小可视宽度 */
+.obs-task-row > .obs-task-go { min-width: 20px !important; display: inline-flex; align-items: center; justify-content: center; }
+.obs-task-go svg { width: 16px; height: 16px; flex: 0 0 auto; }
+
 .obs-task-row {
     display: grid;
-    grid-template-columns: minmax(150px, 1fr) max-content minmax(130px, 1fr) max-content max-content max-content max-content 20px;
+    grid-column: 1 / -1;
+    grid-template-columns: subgrid;
     align-items: center;
-    gap: 8px;
     padding: 11px 12px;
     border-radius: 12px;
     border: 1px solid rgba(127, 127, 127, 0.25);
@@ -555,23 +570,22 @@
 
 /* 窄视口：列表最小宽不足时横向滚动，不挤压列 */
 .obs-task-scroll { overflow-x: auto; }
-.obs-task-list { min-width: 720px; }
 
 /* 类型胶囊：限制在自身列内，文字绝不溢出到相邻列 */
 .obs-task-row > .obs-type-tag { overflow: hidden; text-overflow: ellipsis; justify-self: start; max-width: 100%; }
 
 /* ── 可拖拽列宽 ─────────────────────────────────────────────
-   表头单元格为 flex 容器：左侧标签 + 右缘拖拽手柄。
-   手柄用负外边距扩展可点区域，不占用列的实际宽度。 */
+   表头单元格保持为普通 grid 项（不要改成 flex）：
+   max-content 列在 flex 容器里按标签文字宽计算，与数据行按内容宽计算的结果不同，
+   会导致表头与内容对不齐。拖拽手柄用绝对定位挂在单元格右缘，不参与列宽计算。 */
 .obs-task-head-cell {
     position: relative;
-    display: flex;
-    align-items: center;
+    display: block;
     min-width: 0;
     overflow: visible;
 }
 
-.obs-task-head-label { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.obs-task-head-label { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 .obs-col-resizer {
     position: absolute;
@@ -635,7 +649,7 @@ html.dark .obs-col-resizer:active { background: rgba(59, 130, 246, 0.22); }
 .obs-task-agents { font-size: 12px; opacity: 0.75; }
 
 /* 强制溢出保护：任何列的文字都不得越出自己的单元格 */
-.obs-task-row > * { min-width: 0 !important; max-width: 100%; }
+.obs-task-row > *:not(.obs-task-go) { min-width: 0 !important; max-width: 100%; }
 .obs-task-row > .obs-task-agents, .obs-task-row > .obs-task-time, .obs-task-row > .obs-task-dur, .obs-task-row > .obs-task-spans, .obs-task-row > .obs-type-tag {
     overflow: hidden !important; text-overflow: ellipsis; white-space: nowrap;
 }
@@ -664,6 +678,7 @@ html.dark .obs-col-resizer:active { background: rgba(59, 130, 246, 0.22); }
 .obs-task-go { opacity: 0.45; display: flex; justify-content: center; }
 
 .obs-list-empty {
+    grid-column: 1 / -1;
     display: flex;
     flex-direction: column;
     align-items: center;

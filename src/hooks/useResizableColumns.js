@@ -82,8 +82,3 @@ export function useResizableColumns(storageKey, keys) {
 
     return { widths, onHandlePointerDown, onHandlePointerMove, onHandlePointerUp, resetColumn, resetAll };
 }
-
-/** 把宽度映射编译成 grid-template-columns；未拖过的列为 auto。 */
-export function toGridTemplate(keys, widths) {
-    return keys.map((key) => (widths[key] ? `${widths[key]}px` : 'auto')).join(' ');
-}
