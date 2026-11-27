@@ -2,6 +2,7 @@ import React from 'react';
 import { THIRD_PARTY_CARDS } from '../lib/constants';
 import { resolveLangfuseUrl } from '../lib/urls';
 import { BrandMark, IconExternal } from '../ui/icons';
+import { GRAFANA_ICON_PATH, PROMETHEUS_ICON_PATH } from '../brand-icons';
 
 export function ThirdPartyObservability() {
     const langfuseUrl = resolveLangfuseUrl();
