@@ -35,3 +35,12 @@ registerMenuLabels();
 
 registerMenuLabels();
 
+registerMenuLabels();
+
+// 门户主包可能在插件 bundle 加载之后才完成 i18n 初始化/标签注册，
+// 这里多次延迟重注册，确保 zh 标签最终生效（addResource 幂等）。
+[0, 300, 1000, 2500].forEach((delay) => setTimeout(registerMenuLabels, delay));
+try {
+    const ctx = (typeof window !== 'undefined') && window.__OPENAN_PORTAL_CONTEXT__;
+    if (ctx && ctx.i18n && typeof ctx.i18n.on === 'function') ctx.i18n.on('initialized', registerMenuLabels);
+} catch { /* ignore */ }
