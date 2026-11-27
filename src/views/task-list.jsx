@@ -15,6 +15,7 @@ const COLUMNS = [
     { key: 'duration', label: '耗时', track: 'max-content' },
     { key: 'spans', label: 'Span', track: 'max-content' },
     { key: 'status', label: '状态', track: 'max-content' },
+    { key: 'actions', label: '操作', track: 'max-content' },
     { key: 'go', label: '', track: 'minmax(20px, max-content)' },
 ];
 const COLUMN_KEYS = COLUMNS.map((column) => column.key);
@@ -29,7 +30,7 @@ function buildGridTemplate(widths) {
     return COLUMNS.map((column) => (widths[column.key] ? `${widths[column.key]}px` : column.track)).join(' ');
 }
 
-export function TaskListView({ loading, error, dataset, onOpen, onReload }) {
+export function TaskListView({ loading, error, dataset, onOpen, onOpenBusiness, onReload }) {
     const [query, setQuery] = useState('');
     const [statusFilter, setStatusFilter] = useState('all');
     const { widths, onHandlePointerDown, onHandlePointerMove, onHandlePointerUp, resetColumn, resetAll } =
@@ -106,7 +107,7 @@ export function TaskListView({ loading, error, dataset, onOpen, onReload }) {
                                         onDoubleClick={() => resetColumn(column.key)}
                                     >
                                         <span className="obs-task-head-label">{column.label}</span>
-                                        {column.key !== 'go' && (
+                                        {column.key !== 'go' && column.key !== 'actions' && (
                                             <span
                                                 className="obs-col-resizer"
                                                 role="separator"
@@ -135,6 +136,24 @@ export function TaskListView({ loading, error, dataset, onOpen, onReload }) {
                                     <span className="obs-task-dur">{fmtMs(t.durationMs)}</span>
                                     <span className="obs-task-spans">{t.spanCount}</span>
                                     <StatusPill status={t.status} />
+                                    <span className="obs-task-actions">
+                                        <button
+                                            type="button"
+                                            className="obs-btn obs-task-action"
+                                            onClick={(e) => { e.stopPropagation(); onOpen(t); }}
+                                            title="查看原始观测信号：Metric / Trace / Log 与数据信号字典"
+                                        >
+                                            原始信号
+                                        </button>
+                                        <button
+                                            type="button"
+                                            className="obs-btn obs-task-action obs-task-action-biz"
+                                            onClick={(e) => { e.stopPropagation(); onOpenBusiness(t); }}
+                                            title="查看业务观测：工作流执行、协商与通知、Token 用量"
+                                        >
+                                            业务观测
+                                        </button>
+                                    </span>
                                     <span className="obs-task-go"><IconChevronRight /></span>
                                 </div>
                             ))}
