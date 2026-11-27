@@ -517,7 +517,7 @@
 
 .obs-task-row {
     display: grid;
-    grid-template-columns: minmax(150px, 1.35fr) 88px minmax(130px, 1fr) 116px 78px 50px 66px 20px;
+    grid-template-columns: minmax(150px, 1fr) max-content minmax(130px, 1fr) max-content max-content max-content max-content 20px;
     align-items: center;
     gap: 8px;
     padding: 11px 12px;
@@ -553,6 +553,14 @@
 
 .obs-task-row > .obs-type-tag, .obs-task-row > .obs-task-agents, .obs-task-row > .obs-task-time, .obs-task-row > .obs-task-dur, .obs-task-row > .obs-task-spans { min-width: 0; }
 
+/* 窄视口：列表最小宽不足时横向滚动，不挤压列 */
+.obs-task-scroll { overflow-x: auto; }
+.obs-task-list { min-width: 720px; }
+
+/* 类型胶囊：限制在自身列内，文字绝不溢出到相邻列 */
+.obs-task-row > .obs-type-tag { overflow: hidden; text-overflow: ellipsis; justify-self: start; max-width: 100%; }
+.obs-task-head > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
 .obs-task-name { font-weight: 700; }
 
 .obs-task-run { font-size: 12px; opacity: 0.55; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
@@ -568,7 +576,14 @@
     white-space: nowrap;
 }
 
-.obs-task-agents { font-size: 12px; opacity: 0.75; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.obs-task-agents { font-size: 12px; opacity: 0.75; }
+
+/* 强制溢出保护：任何列的文字都不得越出自己的单元格 */
+.obs-task-row > * { min-width: 0 !important; max-width: 100%; }
+.obs-task-row > .obs-task-agents, .obs-task-row > .obs-task-time, .obs-task-row > .obs-task-dur, .obs-task-row > .obs-task-spans, .obs-task-row > .obs-type-tag {
+    overflow: hidden !important; text-overflow: ellipsis; white-space: nowrap;
+}
+.obs-task-row > .obs-task-time em { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 .obs-task-time { font-size: 12px; font-variant-numeric: tabular-nums; }
 .obs-task-time em { display: block; font-style: normal; font-size: 12px; opacity: 0.5; }
