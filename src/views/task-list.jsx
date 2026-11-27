@@ -4,28 +4,37 @@ import { AGENT_LABELS, TASK_TYPE_LABELS } from '../lib/constants';
 import { fmtAgo, fmtMs, fmtTime } from '../lib/format';
 import { StatusPill, SummaryChips } from '../ui/common';
 import { IconChevronRight, IconRefresh, IconSearch } from '../ui/icons';
-import { toGridTemplate, useResizableColumns } from '../hooks/useResizableColumns';
+import { useResizableColumns } from '../hooks/useResizableColumns';
 
 /** 任务列表的列：表头与数据行共用，顺序即渲染顺序。最后一列为无表头的跳转箭头。 */
 const COLUMNS = [
-    { key: 'task', label: '协作任务' },
-    { key: 'type', label: '类型' },
-    { key: 'agents', label: '参与智能体' },
-    { key: 'time', label: '开始时间' },
-    { key: 'duration', label: '耗时' },
-    { key: 'spans', label: 'Span' },
-    { key: 'status', label: '状态' },
-    { key: 'go', label: '' },
+    { key: 'task', label: '协作任务', track: 'minmax(150px, 1fr)' },
+    { key: 'type', label: '类型', track: 'max-content' },
+    { key: 'agents', label: '参与智能体', track: 'minmax(130px, 1fr)' },
+    { key: 'time', label: '开始时间', track: 'max-content' },
+    { key: 'duration', label: '耗时', track: 'max-content' },
+    { key: 'spans', label: 'Span', track: 'max-content' },
+    { key: 'status', label: '状态', track: 'max-content' },
+    { key: 'go', label: '', track: 'minmax(20px, max-content)' },
 ];
 const COLUMN_KEYS = COLUMNS.map((column) => column.key);
 const COLUMN_STORAGE_KEY = 'openan.observation-center.task-list.columns';
+
+/**
+ * 表头与数据行共用的 grid-template-columns。
+ * 未拖过的列用各自的默认轨道（与 index.css 的列模板一致），拖过的列覆盖为具体像素。
+ * 表头和数据行必须用完全相同的模板，否则两者列宽会对不齐。
+ */
+function buildGridTemplate(widths) {
+    return COLUMNS.map((column) => (widths[column.key] ? `${widths[column.key]}px` : column.track)).join(' ');
+}
 
 export function TaskListView({ loading, error, dataset, onOpen, onReload }) {
     const [query, setQuery] = useState('');
     const [statusFilter, setStatusFilter] = useState('all');
     const { widths, onHandlePointerDown, onHandlePointerMove, onHandlePointerUp, resetColumn, resetAll } =
         useResizableColumns(COLUMN_STORAGE_KEY, COLUMN_KEYS);
-    const gridTemplate = useMemo(() => toGridTemplate(COLUMN_KEYS, widths), [widths]);
+    const gridTemplate = useMemo(() => buildGridTemplate(widths), [widths]);
     const hasCustomWidths = Object.keys(widths).length > 0;
     const tasks = (dataset?.tasks || []).slice();
     const filtered = tasks.filter((t) => {
@@ -84,8 +93,11 @@ export function TaskListView({ loading, error, dataset, onOpen, onReload }) {
                         )}
                     </div>
                     <div className="obs-task-scroll">
-                        <div className={`obs-task-list${hasCustomWidths ? ' obs-task-list-resized' : ''}`}>
-                            <div className="obs-task-row obs-task-head" style={{ gridTemplateColumns: gridTemplate }}>
+                        <div
+                            className={`obs-task-list${hasCustomWidths ? ' obs-task-list-resized' : ''}`}
+                            style={{ gridTemplateColumns: gridTemplate }}
+                        >
+                            <div className="obs-task-row obs-task-head">
                                 {COLUMNS.map((column) => (
                                     <span
                                         key={column.key}
@@ -111,7 +123,7 @@ export function TaskListView({ loading, error, dataset, onOpen, onReload }) {
                                 ))}
                             </div>
                             {filtered.map((t) => (
-                                <div key={t.taskId} className="obs-task-row" style={{ gridTemplateColumns: gridTemplate }} onClick={() => onOpen(t)} role="button" tabIndex={0}
+                                <div key={t.taskId} className="obs-task-row" onClick={() => onOpen(t)} role="button" tabIndex={0}
                                     onKeyDown={(e) => { if (e.key === 'Enter') onOpen(t); }}>
                                     <div className="obs-task-title">
                                         <span className="obs-task-name">{t.title}</span>
