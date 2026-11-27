@@ -517,10 +517,10 @@
 
 .obs-task-row {
     display: grid;
-    grid-template-columns: minmax(200px, 1.3fr) 96px minmax(180px, 1fr) 132px 88px 56px 76px 22px;
+    grid-template-columns: minmax(150px, 1.35fr) 88px minmax(130px, 1fr) 116px 78px 50px 66px 20px;
     align-items: center;
-    gap: 10px;
-    padding: 11px 14px;
+    gap: 8px;
+    padding: 11px 12px;
     border-radius: 12px;
     border: 1px solid rgba(127, 127, 127, 0.25);
     background: rgba(127, 127, 127, 0.05);
@@ -548,6 +548,10 @@
 .obs-task-head:hover { transform: none; border-color: rgba(127, 127, 127, 0.25); background: transparent; }
 
 .obs-task-title { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+
+.obs-task-title .obs-task-name, .obs-task-title .obs-task-run { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.obs-task-row > .obs-type-tag, .obs-task-row > .obs-task-agents, .obs-task-row > .obs-task-time, .obs-task-row > .obs-task-dur, .obs-task-row > .obs-task-spans { min-width: 0; }
 
 .obs-task-name { font-weight: 700; }
 

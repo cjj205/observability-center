@@ -19,6 +19,10 @@ export const AGENT_LABELS = {
     'workbench-agent': '工单执行',
     'capacity-agent': '容量分析',
     'inspection-agent': '巡检执行',
+    'WAIMO Complaint Agent': 'WAIMO 投诉智能体',
+    'Transport Complaint Agent': '运输投诉智能体',
+    'West-GD NETSpirit': '粤西网络先锋',
+    'East-GD NETSpirit': '粤东网络先锋',
 };
 
 export const SPAN_KIND_LABELS = { CLIENT: 'C', SERVER: 'S', INTERNAL: 'I', PRODUCER: 'P', CONSUMER: 'C' };
@@ -34,6 +38,7 @@ export const TASK_TYPE_LABELS = {
     'service-provisioning': '业务开通',
     'emergency-drill': '应急演练',
     'capacity-analysis': '容量分析',
+    'enterprise-private-line-complaint-handling': '企业专线投诉处理',
 };
 
 export const COORDINATOR = 'coordinator-agent';
