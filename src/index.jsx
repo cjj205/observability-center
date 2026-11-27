@@ -4,13 +4,17 @@ import './i18n/menu-labels';
 import { useState } from 'react';
 import { useCollabTasks } from './hooks/useCollabTasks';
 import { IconRefresh } from './ui/icons';
+import { BusinessObservationView } from './views/business-view';
 import { TaskDetailView } from './views/task-detail';
 import { TaskListView } from './views/task-list';
 import { ThirdPartyObservability } from './ui/third-party';
 
 export default function ObservationCenterPlugin() {
     const tasks = useCollabTasks();
+    // view: null = 列表；'raw' = 原始观测信号（Metric/Trace/Log）；'business' = 业务观测
     const [selected, setSelected] = useState(null);
+    const [view, setView] = useState(null);
+    const backToList = () => { setSelected(null); setView(null); };
     return (
         <div className="obs-plugin-root">
             <div className="obs-toolbar">
@@ -31,14 +35,17 @@ export default function ObservationCenterPlugin() {
                 </div>
             </div>
 
-            {selected ? (
-                <TaskDetailView task={selected} dataset={tasks.dataset} onBack={() => setSelected(null)} />
+            {selected && view === 'business' ? (
+                <BusinessObservationView task={selected} onBack={backToList} />
+            ) : selected ? (
+                <TaskDetailView task={selected} dataset={tasks.dataset} onBack={backToList} />
             ) : (
                 <TaskListView
                     loading={tasks.loading}
                     error={tasks.error}
                     dataset={tasks.dataset}
-                    onOpen={setSelected}
+                    onOpen={(task) => { setSelected(task); setView('raw'); }}
+                    onOpenBusiness={(task) => { setSelected(task); setView('business'); }}
                     onReload={tasks.reload}
                 />
             )}

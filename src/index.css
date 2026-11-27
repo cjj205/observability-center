@@ -677,6 +677,115 @@ html.dark .obs-col-resizer:active { background: rgba(59, 130, 246, 0.22); }
 
 .obs-task-go { opacity: 0.45; display: flex; justify-content: center; }
 
+/* ── 任务列表「操作」列：原始信号 / 业务观测 ───────────────────── */
+.obs-task-actions { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
+
+.obs-task-action {
+    padding: 3px 10px;
+    font-size: 12px;
+    line-height: 1.4;
+    border-radius: 999px;
+}
+
+/* 业务观测按钮用主色描边，与「原始信号」区分 */
+.obs-task-action-biz { border-color: #2563eb; color: #2563eb; }
+.obs-task-action-biz:hover { background: rgba(37, 99, 235, 0.1); }
+
+html.dark .obs-task-action-biz { border-color: #3b82f6; color: #93c5fd; }
+html.dark .obs-task-action-biz:hover { background: rgba(59, 130, 246, 0.18); }
+
+/* ── 业务观测视图 ─────────────────────────────────────────── */
+.obs-biz-kpis {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 10px;
+    margin-bottom: 12px;
+}
+
+.obs-biz-kpi {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 12px 14px;
+    border-radius: 12px;
+    border: 1px solid rgba(127, 127, 127, 0.25);
+    background: rgba(127, 127, 127, 0.05);
+}
+
+.obs-biz-kpi-label { font-size: 12px; opacity: 0.65; }
+.obs-biz-kpi-value { font-size: 18px; font-weight: 700; font-variant-numeric: tabular-nums; }
+
+.obs-biz-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.obs-biz-block { display: flex; flex-direction: column; gap: 10px; }
+
+.obs-biz-kv-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 8px 14px;
+}
+
+.obs-biz-kv-grid-gap { margin-top: 4px; }
+
+.obs-biz-kv { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.obs-biz-kv-v { font-size: 13px; overflow-wrap: anywhere; }
+
+/* 工作流步骤：序号 · 名称 · 负责智能体 · 时序条 · 耗时 */
+.obs-biz-steps { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+
+.obs-biz-step {
+    display: grid;
+    grid-template-columns: 22px minmax(80px, 1fr) minmax(90px, 1.1fr) minmax(120px, 1.6fr) 64px;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+}
+
+.obs-biz-step-idx {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 20px; height: 20px; border-radius: 50%;
+    background: rgba(99, 102, 241, 0.14); color: #6366f1; font-weight: 700;
+}
+
+.obs-biz-step-name { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.obs-biz-step-owner { opacity: 0.75; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.obs-biz-step-track { position: relative; display: block; height: 8px; border-radius: 4px; background: rgba(127, 127, 127, 0.15); overflow: hidden; }
+.obs-biz-step-dur { text-align: right; font-variant-numeric: tabular-nums; opacity: 0.8; }
+
+/* Token 用量 */
+.obs-biz-token-summary { display: flex; flex-wrap: wrap; align-items: center; gap: 14px; font-size: 13px; }
+.obs-biz-token-num b { font-variant-numeric: tabular-nums; }
+.obs-biz-token-filter { margin-left: auto; }
+
+.obs-biz-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.obs-biz-table th, .obs-biz-table td { padding: 7px 10px; text-align: left; border-bottom: 1px solid rgba(127, 127, 127, 0.18); }
+.obs-biz-table th { font-weight: 700; opacity: 0.65; white-space: nowrap; }
+.obs-biz-table td:not(:first-child) { font-variant-numeric: tabular-nums; }
+.obs-biz-table tbody tr:hover { background: rgba(37, 99, 235, 0.06); }
+
+.obs-biz-bar-col { min-width: 160px; }
+.obs-biz-bar-track { display: inline-flex; vertical-align: middle; width: 110px; height: 8px; border-radius: 4px; background: rgba(127, 127, 127, 0.15); overflow: hidden; }
+.obs-biz-bar { display: block; height: 100%; }
+.obs-biz-bar-in { background: #2563eb; }
+.obs-biz-bar-out { background: #7c3aed; }
+.obs-biz-bar-track.obs-biz-bar-split { gap: 0; }
+.obs-biz-bar-pct { margin-left: 8px; vertical-align: middle; opacity: 0.75; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.obs-biz-model { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; opacity: 0.8; }
+
+html.dark .obs-biz-bar-track { background: rgba(127, 127, 127, 0.22); }
+html.dark .obs-biz-bar-in { background: #3b82f6; }
+html.dark .obs-biz-bar-out { background: #a78bfa; }
+
+html.dark .obs-biz-kpi,
+html.dark .obs-biz-block { border-color: rgba(127, 127, 127, 0.22); background: rgba(127, 127, 127, 0.08); }
+html.dark .obs-biz-step-track,
+html.dark .obs-biz-bar-track { background: rgba(127, 127, 127, 0.22); }
+
 .obs-list-empty {
     grid-column: 1 / -1;
     display: flex;
