@@ -34,21 +34,28 @@ class ScenarioDefinitionTest {
     private static final ObjectMapper JSON = new ObjectMapper();
 
     @Test
-    void loadsThePr29ScenarioAsSevenExecutableSteps() throws Exception {
-        try (InputStream input = getClass().getResourceAsStream(
-                "/scenario/psop_Complaint_Handling.json")) {
+    void loadsThePr39LayeredScenarioResources() throws Exception {
+        Workflow full = load("/scenario/psop_Complaint_Handling.json");
+        Workflow waimo = load("/scenario/psop_Complaint_Handling_WAIMO.json");
+        Workflow transport = load("/scenario/psop_Complaint_Handling_Transport.json");
+
+        assertEquals("1d4c367d-9f0c-4400-85d2-caaf21ee37af", full.getId());
+        assertEquals(16, full.getSteps().size());
+        assertEquals("1d4c367d-9f0c-4400-85d2-caaf21ee37af-waimo", waimo.getId());
+        assertEquals(7, waimo.getSteps().size());
+        assertEquals("Transport Complaint Agent", waimo.getSteps().get(4).getSubtasks().get(0).getAgent());
+        assertEquals("1d4c367d-9f0c-4400-85d2-caaf21ee37af-transport", transport.getId());
+        assertEquals(12, transport.getSteps().size());
+        assertEquals(2, transport.getSteps().get(2).getSubtasks().size());
+        assertTrue(transport.getSteps().get(2).getSubtasks().stream()
+                .allMatch(task -> task.getAgent().contains("NETSpirit")));
+    }
+
+    private Workflow load(String resource) throws Exception {
+        try (InputStream input = getClass().getResourceAsStream(resource)) {
             Map<String, Object> raw = JSON.readValue(input, new TypeReference<>() {
             });
-            Workflow workflow = Workflow.fromMap(raw);
-
-            assertEquals("1d4c367d-9f0c-4400-85d2-caaf21ee37af", workflow.getId());
-            assertEquals(7, workflow.getSteps().size());
-            assertEquals(
-                    List.of("step1", "step2", "step3", "step4", "step5", "step6", "step7"),
-                    workflow.getSteps().stream().map(step -> step.getName()).toList());
-            assertTrue(workflow.getSteps().get(3).getSubtasks().get(0).getAgent()
-                    .contains("Transport"));
-            assertEquals("SelfLoop", workflow.getSteps().get(0).getStepType().getValue());
+            return Workflow.fromMap(raw);
         }
     }
 }

@@ -44,7 +44,7 @@ import net.openan.observability.SdkConfig;
 /** Main entry point for the deterministic complaint-handling workflow demo. */
 public final class DemoMain {
     private static final ObjectMapper JSON = new ObjectMapper();
-    private static final String PSOP_RESOURCE = "/scenario/psop_Complaint_Handling.json";
+    private static final String PSOP_RESOURCE = "/scenario/psop_Complaint_Handling_WAIMO.json";
 
     private DemoMain() {
     }
@@ -124,7 +124,7 @@ public final class DemoMain {
                     }
                 }
             };
-            var controlPoint = new ComplaintControlPoint(taskT, runId);
+            var controlPoint = new ComplaintControlPoint(taskT, runId, caseName);
             try (var scope = traceParent.makeCurrent()) {
                 result = ExecutePsop.builder()
                         .psop(workflow)

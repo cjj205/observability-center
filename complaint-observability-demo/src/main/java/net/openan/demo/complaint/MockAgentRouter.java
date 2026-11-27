@@ -47,6 +47,7 @@ final class MockAgentRouter {
     private final TaskTCodec taskT;
     private final WorkflowEngineClient regionalClient;
     private final TraceParentRegistry traceParents;
+    private final LayeredTransportWorkflow transportWorkflow;
     private final ConcurrentLinkedQueue<Map<String, Object>> records = new ConcurrentLinkedQueue<>();
 
     MockAgentRouter(String caseName, Observability observe, TaskTCodec taskT) {
@@ -67,11 +68,22 @@ final class MockAgentRouter {
             TaskTCodec taskT,
             WorkflowEngineClient regionalClient,
             TraceParentRegistry traceParents) {
+        this(caseName, observe, taskT, regionalClient, traceParents, null);
+    }
+
+    MockAgentRouter(
+            String caseName,
+            Observability observe,
+            TaskTCodec taskT,
+            WorkflowEngineClient regionalClient,
+            TraceParentRegistry traceParents,
+            LayeredTransportWorkflow transportWorkflow) {
         this.caseName = caseName;
         this.observe = observe;
         this.taskT = taskT;
         this.regionalClient = regionalClient;
         this.traceParents = traceParents;
+        this.transportWorkflow = transportWorkflow;
     }
 
     SendMessageResult dispatch(String agentName, MessageContent content) {
@@ -108,7 +120,10 @@ final class MockAgentRouter {
                     client.error();
                     return failure(agentName, step, skill, runId, started, "taskt.invalid", detail);
                 }
-                SendMessageResult result = process(agentName, step, skill, prompt, runId, server, attributes, started);
+                SendMessageResult result;
+                try (var scope = server.makeCurrent()) {
+                    result = process(agentName, step, skill, prompt, runId, server, attributes, started, content);
+                }
                 if (result.getFailureCode() == null) {
                     server.ok();
                     client.ok();
@@ -142,6 +157,10 @@ final class MockAgentRouter {
                         "task.duration",
                         (System.nanoTime() - started) / 1_000_000.0,
                         Map.of("task.type", skill, "task.object", step));
+                observe.metric(
+                        "substep.duration",
+                        (System.nanoTime() - started) / 1_000_000.0,
+                        Map.of("gen_ai.agent.name", agentName, "substep.name", skill));
                 return result;
             }
         }
@@ -159,7 +178,33 @@ final class MockAgentRouter {
             String runId,
             ObservationSpan parent,
             Map<String, Object> attributes,
-            long started) {
+            long started,
+            MessageContent content) {
+        if (transportWorkflow != null && agentName.equals("Transport Complaint Agent")
+                && skill.equals("Leased-Line Complaint Diagnosis")) {
+            return transportWorkflow.execute(content);
+        }
+        if (skill.equals("Network Operation Authorization")) {
+            observe.metric(
+                    "authorization.preauthorize.count",
+                    1,
+                    Map.of("authorization.policy.operation.type", "tunnel-optimization"));
+            observe.metric(
+                    "authorization.preauthorize.duration",
+                    (System.nanoTime() - started) / 1_000_000.0,
+                    Map.of("authorization.policy.operation.type", "tunnel-optimization"));
+        }
+        if ("authorization-denied".equals(caseName) && skill.equals("Network Operation Authorization")) {
+            return failure(agentName, step, skill, runId, started,
+                    "authorization.denied", "Network operation authorization denied");
+        }
+        if (skill.contains("Notification") || skill.equals("Restoration Result Reply")
+                || skill.equals("Root Cause Summarization")) {
+            observe.metric(
+                    "notification.count",
+                    1,
+                    Map.of("notification.topic", notificationTopic(skill)));
+        }
         if ("authorization-denied".equals(caseName) && skill.contains("Complaint Handling Dispatch")) {
             return processRestorationDenied(agentName, step, skill, runId, parent, attributes, started);
         }
@@ -526,5 +571,15 @@ final class MockAgentRouter {
             Thread.currentThread().interrupt();
             throw new IllegalStateException("MockAgent interrupted", error);
         }
+    }
+
+    private static String notificationTopic(String skill) {
+        return switch (skill) {
+            case "Root Cause Summarization" -> "root-cause.reported";
+            case "Restoration Plan Notification" -> "restoration-plan.reported";
+            case "Restoration Notification" -> "restoration-result.reported";
+            case "Restoration Result Reply" -> "sla-verification.reported";
+            default -> "complaint.update";
+        };
     }
 }

@@ -118,6 +118,7 @@ final class SocketA2AJavaClientRuntime implements A2AJavaClientRuntime {
         UrlConnectionA2AHttpClient httpClient = new UrlConnectionA2AHttpClient(timeoutMillis);
         RestTransport transport = null;
         ObservationSpan clientSpan = null;
+        long started = System.nanoTime();
         try {
             if (agentCard.supportedInterfaces() == null || agentCard.supportedInterfaces().isEmpty()) {
                 throw new IOException("Agent card has no supported interfaces: " + agentCard.name());
@@ -145,6 +146,12 @@ final class SocketA2AJavaClientRuntime implements A2AJavaClientRuntime {
         } catch (Exception failure) {
             throw new IllegalStateException("A2A HTTP request failed", failure);
         } finally {
+            if (observe != null) {
+                observe.metric(
+                        "gen_ai.client.operation.duration",
+                        (System.nanoTime() - started) / 1_000_000_000.0,
+                        Map.of("operation.name", "SendMessage"));
+            }
             if (clientSpan != null) {
                 clientSpan.close();
             }

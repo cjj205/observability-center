@@ -40,7 +40,7 @@ $roleReports = @()
 $allRecords = @()
 
 if ([string]$report.transportMode -ne 'multi-http') { $failures.Add("expected multi-http, got $($report.transportMode)") }
-if ([string]$report.workflowId -ne '1d4c367d-9f0c-4400-85d2-caaf21ee37af') { $failures.Add('workflowId does not match PR #29') }
+if ([string]$report.workflowId -ne '1d4c367d-9f0c-4400-85d2-caaf21ee37af-waimo') { $failures.Add('workflowId does not match the PR #39 WAIMO PSOP') }
 if ($rootUrls.Count -ne 4) { $failures.Add("expected four root AgentCard URLs, got $($rootUrls.Count)") }
 
 foreach ($role in $roleNames) {
@@ -57,41 +57,40 @@ foreach ($role in $roleNames) {
 }
 
 $transportRecords = @($roleReports | Where-Object { $_.role -eq 'transport' } | ForEach-Object { $_.agentRecords })
-$regionalRecords = @($roleReports | Where-Object { $_.role -in @('west', 'east') } | ForEach-Object { $_.agentRecords })
+$westRecords = @($roleReports | Where-Object { $_.role -eq 'west' } | ForEach-Object { $_.agentRecords })
+$eastRecords = @($roleReports | Where-Object { $_.role -eq 'east' } | ForEach-Object { $_.agentRecords })
 
 if ($Case -eq 'success') {
     if (-not $report.success) { $failures.Add('success case did not complete') }
-    if ($history.Count -ne 7) { $failures.Add("expected 7 history entries, got $($history.Count)") }
-    if (-not ($history.step -contains 'step7')) { $failures.Add('closure step is missing') }
-    foreach ($operation in @('diagnosis-east', 'diagnosis-west', 'authorization', 'restoration')) {
-        if (@($transportRecords | Where-Object { $_.kind -eq 'nested-task-http' -and $_.operation -eq $operation -and $_.status -eq 'completed' }).Count -ne 1) {
-            $failures.Add("transport did not complete nested operation $operation")
-        }
-    }
-    foreach ($step in @('step4', 'step5', 'step6')) {
+    if ($history.Count -ne 6) { $failures.Add("expected 6 WAIMO history entries, got $($history.Count)") }
+    if (-not ($history.step -contains 'step6')) { $failures.Add('WAIMO closure step is missing') }
+    foreach ($step in @('step1', 'step2', 'step4', 'step6', 'step11', 'step12', 'step13')) {
         if (@($transportRecords | Where-Object { $_.kind -eq 'workflow-task' -and $_.step -eq $step -and $_.status -eq 'completed' }).Count -ne 1) {
-            $failures.Add("transport workflow record missing for $step")
+            $failures.Add("Transport PSOP step did not complete: $step")
         }
     }
-    $diagnosis = @($transportRecords | Where-Object { $_.operation -in @('diagnosis-east', 'diagnosis-west') -and $_.status -eq 'completed' })
-    if ($diagnosis.Count -ne 2) {
-        $failures.Add('two completed regional diagnosis records are required')
-    } else {
-        $latestStart = ($diagnosis | Measure-Object -Property startedNanos -Maximum).Maximum
-        $earliestFinish = ($diagnosis | Measure-Object -Property finishedNanos -Minimum).Minimum
-        if ([long]$latestStart -ge [long]$earliestFinish) { $failures.Add('regional diagnosis windows did not overlap') }
+    if (@($westRecords | Where-Object { $_.step -eq 'step3' -and $_.status -eq 'completed' }).Count -ne 1) {
+        $failures.Add('West OMC diagnosis record is missing')
     }
-    if (@($regionalRecords | Where-Object { $_.kind -eq 'workflow-task' -or $_.kind -eq 'nested-task-http' }).Count -eq 0) {
-        $failures.Add('regional JVMs did not record any agent work')
+    if (@($eastRecords | Where-Object { $_.step -eq 'step3' -and $_.status -eq 'completed' }).Count -ne 1) {
+        $failures.Add('East OMC diagnosis record is missing')
+    }
+    foreach ($step in @('step7', 'step9')) {
+        if (@($westRecords | Where-Object { $_.step -eq $step -and $_.status -eq 'completed' }).Count -ne 1) {
+            $failures.Add("Selected OMC step did not complete: $step")
+        }
     }
 } else {
     if ($report.success) { $failures.Add('authorization-denied case unexpectedly succeeded') }
     if ($history.Count -ne 5) { $failures.Add("expected 5 history entries, got $($history.Count)") }
     if (-not ($history.step -contains 'step5')) { $failures.Add('failed dispatch step is missing') }
     if ($history.step -contains 'step6' -or $history.step -contains 'step7') { $failures.Add('downstream steps ran after authorization denial') }
-    if (@($history | Where-Object { $_.errorCode -eq 'authorization.denied' }).Count -ne 1) { $failures.Add('authorization.denied was not recorded exactly once') }
-    if (@($transportRecords | Where-Object { $_.operation -eq 'authorization' -and $_.status -eq 'failed' }).Count -ne 1) { $failures.Add('transport authorization failure record is missing') }
-    if (@($transportRecords | Where-Object { $_.operation -eq 'restoration' }).Count -ne 0) { $failures.Add('restoration ran after authorization denial') }
+    if (@($westRecords | Where-Object { $_.step -eq 'step7' -and $_.status -eq 'failed' -and $_.errorCode -eq 'authorization.denied' }).Count -ne 1) {
+        $failures.Add('Selected OMC authorization denial record is missing')
+    }
+    if (@($transportRecords | Where-Object { $_.step -in @('step6', 'step9', 'step11', 'step12', 'step13') }).Count -ne 0) {
+        $failures.Add('Transport continued after authorization denial')
+    }
 }
 
 $summary = [ordered]@{

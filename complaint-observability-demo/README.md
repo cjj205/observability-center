@@ -2,17 +2,21 @@
 
 ## 目标
 
-用一次跨地市企业专线 SLA 劣化投诉，串起 **Java Workflow Engine 执行 PSOP、A2A-T 任务提示词生成/校验、MockAgent 处理、Observability Java SDK 产生三类信号**。投诉、诊断、授权、抢通和 SLA 数据均使用固定测试数据。主路径覆盖七个业务阶段，以一次成功和一次授权拒绝作为演示入口。
+用一次跨地市企业专线 SLA 劣化投诉，串起 **Java Workflow Engine 执行分层 PSOP、A2A-T 任务提示词生成/校验、MockAgent 处理、Observability Java SDK 产生三类信号**。WAIMO 加载 7 步顶层 PSOP；Transport 收到诊断任务后加载 12 步子 PSOP，并编排 West/East OMC。投诉、诊断、授权、抢通和 SLA 数据均使用固定测试数据。
 
 当前目录提供三种传输模式。默认 `memory` 模式用内存 client 快速离线回归；`http` 模式在同一 JVM 内启动四个带独立 AgentCard 的 HTTP MockAgent；`run-four-jvm.ps1` 通过同一套 classpath 启动 WAIMO、Transport、West、East 四个独立 JVM。HTTP 路径使用官方 A2A Java REST handler 和 Workflow Engine 的 `DefaultWorkflowEngineClient` 完成真实 HTTP 请求。所有模式都经过 Task-T client/server 校验和 Observability SDK 埋点；报告记录 transport、Agent URL、引擎历史和 Agent 处理记录。
 
-详细的组件边界、信号字段、分阶段路线和验收条件见 [`docs/IMPLEMENTATION_PLAN.md`](docs/IMPLEMENTATION_PLAN.md)。
+分层角色、指标基线和验收条件见 [`docs/LAYERED_PSOP_REFACTOR_PLAN.md`](docs/LAYERED_PSOP_REFACTOR_PLAN.md)。
+从 Agent 启动到 A2A-T 通信、执行引擎和 OTLP 上报的完整运行说明见
+[`docs/DEMO_RUNTIME_GUIDE.md`](docs/DEMO_RUNTIME_GUIDE.md)。
+本地 Prometheus、Thanos、Jaeger、OpenSearch 的 Web 入口和查询命令见
+[`docs/LOCAL_STORAGE_VIEWING.md`](docs/LOCAL_STORAGE_VIEWING.md)。
 
 ## 当前实现状态
 
 | 能力 | 当前状态 | 证据 |
 | --- | --- | --- |
-| PR #29 七步 PSOP | 已实现 | `src/main/resources/scenario/psop_Complaint_Handling.json`，`ScenarioDefinitionTest` |
+| PR #39 分层 PSOP | 已实现 | 16 步方案包、WAIMO 7 步 PSOP、Transport 12 步 PSOP；`ScenarioDefinitionTest` 校验三份资源 |
 | Workflow Engine Java SDK | 已接入 | `ExecutePsop`、`ControlPoint`、`WorkflowEngineClient`、事件回调和 workflow observability |
 | A2A-T Java SDK | 已接入 | `TaskTCodec` 通过 client orchestrator 生成提示词，再由 server orchestrator 校验；静态 LLM 只提供确定性响应 |
 | MockAgent | 已实现（fixture + Python 互通探针） | `MockAgentRouter` 保证主流程确定性；`MockAgentInteropMain` / `run-mockagent-interop.ps1` 已对锁定的 Python MockAgent 完成 AgentCard、Task-T 和 A2A HTTP 回包验证 |
@@ -20,7 +24,7 @@
 | 运行证据 | 已实现 | `artifacts/<run_id>.json` 保存引擎历史、事件、Agent 记录和关联 ID |
 | Collector/Jaeger/OpenSearch/Prometheus | 已验证（WSL2 Docker） | `scripts/start.ps1` 复用 SDK 的 local-storage Compose；Windows 找不到 Docker CLI 时自动转到 WSL Ubuntu，使用 `run.ps1 -EnableTelemetry` 导出 |
 | HTTP A2A / 四角色 | 已实现（内嵌 HTTP） | `HttpMockAgentServer` 使用官方 A2A REST handler，`HttpDemoRuntime` 连接四个 AgentCard；`-Transport http` 可运行成功和拒绝路径 |
-| 四 JVM / 独立进程 | 已实现 | `RoleMain`、`start-four-jvm.ps1`、`stop-four-jvm.ps1`、`verify-multiprocess.ps1`；success/authorization-denied 已完成端到端验收 |
+| 四 JVM / 独立进程 | 已实现 | `RoleMain`、`LayeredTransportWorkflow`、`start-four-jvm.ps1`、`stop-four-jvm.ps1`、`verify-multiprocess.ps1`；WAIMO→Transport→OMC 的 success/authorization-denied 已完成端到端验收 |
 | 存储查询原始证据 | 已验证 | `verify-storage.ps1` 保存 `artifacts/<run_id>.storage.json`；WSL2 local-storage 已查到 Metric、Trace、Log |
 | 宿主 API | 已实现（单 JVM） | `HostMain` 提供 `POST /runs`、`GET /runs/{run_id}`、`GET /healthz` 和 `POST /admin/shutdown`；`run-host.ps1` 提供验收入口 |
 | Python MockAgent 互通 | 已实现探针 | `scripts/run-mockagent-interop.ps1` 在隔离 venv 中启动 `openan-demo/mockagent` gateway，并通过 Java A2A client 发送 Task-T |
@@ -112,7 +116,7 @@ scripts/linux/stop-storage.sh
 
 | 来源 | 用法 |
 | --- | --- |
-| [PR #29 的 PSOP](https://github.com/project-openan/observability-sdk-java/blob/8f14eead8dc570e532f8ac16d35ec5f689175fde/consumer-smoke/src/main/resources/psop_Complaint_Handling.json) 和[场景说明](https://github.com/project-openan/observability-sdk-java/blob/8f14eead8dc570e532f8ac16d35ec5f689175fde/consumer-smoke/src/main/resources/workflow_nl_Complaint_Handling.txt) | 业务基线。PSOP ID 为 `1d4c367d-9f0c-4400-85d2-caaf21ee37af`，共七个步骤、15 个子任务。 |
+| [PR #39 的分层 PSOP](https://github.com/project-openan/observability-sdk-java/pull/39) 和场景说明 | 业务基线。全链路方案包 16 步；WAIMO 视角 7 步；Transport 视角 12 步。 |
 | [PR #30 的 ConsumerComplaintHandling](https://github.com/project-openan/observability-sdk-java/blob/11326ed5532454312ee17ddbefaa6be121bcfe0b/consumer-smoke/src/main/java/net/openan/observability/consumer/ConsumerComplaintHandling.java) | 信号和展示参考。样例直接创建客户端与服务端 span，耗时使用常量。Demo 的信号从引擎回调和各进程的真实收发与处理产生。 |
 | [MockAgent](https://github.com/project-openan/openan-demo/tree/main/mockagent) | Python/FastAPI 实现。`run-mockagent-interop.ps1` 启动锁定版本的 gateway，Java 侧用 A2A client + Task-T 发送探针请求；主流程的确定性分支仍由 Java fixture 承担。 |
 | [Workflow Engine Java SDK](https://github.com/project-openan/workflow-engine-sdk-java) | `ExecutePsop`、`ControlPoint`、`WorkflowEngineClient` 和传输层。 |
