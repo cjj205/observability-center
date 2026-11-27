@@ -37,10 +37,16 @@ import org.a2aproject.sdk.spec.TextPart;
 final class ComplaintControlPoint implements ControlPoint {
     private final TaskTCodec taskT;
     private final String runId;
+    private final String caseName;
 
     ComplaintControlPoint(TaskTCodec taskT, String runId) {
+        this(taskT, runId, "success");
+    }
+
+    ComplaintControlPoint(TaskTCodec taskT, String runId, String caseName) {
         this.taskT = taskT;
         this.runId = runId;
+        this.caseName = caseName;
     }
 
     @Override
@@ -71,6 +77,22 @@ final class ComplaintControlPoint implements ControlPoint {
 
     @Override
     public CompletableFuture<RouteDecision> onRoute(RouteRequest request) {
+        String condition = request.condition();
+        if (condition == null || condition.isBlank()) {
+            return CompletableFuture.completedFuture(RouteDecision.allow());
+        }
+        if (condition.contains("授权校验通过")) {
+            return CompletableFuture.completedFuture(caseName.equals("success")
+                    ? RouteDecision.allow(condition) : RouteDecision.deny(condition));
+        }
+        if (condition.contains("授权校验不通过") || condition.contains("授权失败")
+                || condition.contains("授权被拒绝")) {
+            return CompletableFuture.completedFuture(caseName.equals("authorization-denied")
+                    ? RouteDecision.allow(condition) : RouteDecision.deny(condition));
+        }
+        if (condition.contains("修复动作执行失败") || condition.contains("SLA指标未恢复")) {
+            return CompletableFuture.completedFuture(RouteDecision.deny(condition));
+        }
         return CompletableFuture.completedFuture(RouteDecision.allow(request.condition()));
     }
 }

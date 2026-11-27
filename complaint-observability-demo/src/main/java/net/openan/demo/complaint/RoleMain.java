@@ -50,7 +50,7 @@ import org.a2aproject.sdk.spec.AgentCard;
 /** Starts one role of the multi-process complaint demo. */
 public final class RoleMain {
     private static final ObjectMapper JSON = new ObjectMapper();
-    private static final String PSOP_RESOURCE = "/scenario/psop_Complaint_Handling.json";
+    private static final String PSOP_RESOURCE = "/scenario/psop_Complaint_Handling_WAIMO.json";
 
     private RoleMain() {
     }
@@ -86,9 +86,12 @@ public final class RoleMain {
                 WorkflowEngineClientConfig config = clientConfig();
                 AgentCard west = card(RoleSpec.WEST, "demo.west.url");
                 AgentCard east = card(RoleSpec.EAST, "demo.east.url");
+                AgentCard transport = HttpMockAgentServer.agentCard(spec.agentName(), publicUrl);
+                AgentCard selectedOmc = HttpMockAgentServer.agentCard(
+                        "Selected OMC Agent", west.supportedInterfaces().get(0).url());
                 ownedClient = DefaultWorkflowEngineClient.owning(
                         new A2ATransport(
-                                List.of(west, east),
+                                List.of(transport, west, east, selectedOmc),
                                 new SocketA2AJavaClientRuntime(
                                         config.getSendTimeoutSeconds(), observe, null, traceParents),
                                 config),
@@ -96,7 +99,13 @@ public final class RoleMain {
                 client = new HttpWorkflowEngineClient(ownedClient);
                 server = HttpMockAgentServer.start(
                         spec.agentName(),
-                        new MockAgentRouter(caseName, observe, taskT, client, traceParents),
+                        new MockAgentRouter(
+                                caseName,
+                                observe,
+                                taskT,
+                                client,
+                                traceParents,
+                                new LayeredTransportWorkflow(caseName, observe, taskT, client)),
                         port,
                         publicUrl,
                         shutdown::countDown);
@@ -212,7 +221,7 @@ public final class RoleMain {
         ExecutionResult result = ExecutePsop.builder()
                 .psop(workflow)
                 .engineClient(client)
-                .controlPoint(new ComplaintControlPoint(taskT, runId))
+                .controlPoint(new ComplaintControlPoint(taskT, runId, caseName))
                 .runtimeIntent("跨地市企业专线SLA劣化投诉处理")
                 .lang("zh")
                 .eventCallback(callback)
