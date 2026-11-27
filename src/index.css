@@ -559,7 +559,63 @@
 
 /* 类型胶囊：限制在自身列内，文字绝不溢出到相邻列 */
 .obs-task-row > .obs-type-tag { overflow: hidden; text-overflow: ellipsis; justify-self: start; max-width: 100%; }
-.obs-task-head > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* ── 可拖拽列宽 ─────────────────────────────────────────────
+   表头单元格为 flex 容器：左侧标签 + 右缘拖拽手柄。
+   手柄用负外边距扩展可点区域，不占用列的实际宽度。 */
+.obs-task-head-cell {
+    position: relative;
+    display: flex;
+    align-items: center;
+    min-width: 0;
+    overflow: visible;
+}
+
+.obs-task-head-label { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.obs-col-resizer {
+    position: absolute;
+    top: 50%;
+    right: -5px;
+    width: 10px;
+    height: 20px;
+    transform: translateY(-50%);
+    cursor: col-resize;
+    touch-action: none;
+    border-radius: 3px;
+    transition: background 0.12s ease;
+}
+
+/* 居中的细分隔线 */
+.obs-col-resizer::after {
+    content: '';
+    position: absolute;
+    top: 3px;
+    bottom: 3px;
+    left: 50%;
+    width: 2px;
+    margin-left: -1px;
+    border-radius: 1px;
+    background: rgba(127, 127, 127, 0.35);
+    transition: background 0.12s ease;
+}
+
+.obs-col-resizer:hover,
+.obs-col-resizer:active { background: rgba(37, 99, 235, 0.12); }
+.obs-col-resizer:hover::after,
+.obs-col-resizer:active::after { background: #2563eb; }
+
+/* 拖拽中：全屏锁定为 col-resize，避免划过行时闪烁 */
+body.obs-col-resizing,
+body.obs-col-resizing * { cursor: col-resize !important; user-select: none !important; }
+
+.obs-task-list-resized .obs-task-row { transition: none; }
+
+.obs-col-reset { flex: 0 0 auto; padding: 2px 9px; font-size: 12px; }
+
+html.dark .obs-col-resizer::after { background: rgba(127, 127, 127, 0.45); }
+html.dark .obs-col-resizer:hover,
+html.dark .obs-col-resizer:active { background: rgba(59, 130, 246, 0.22); }
 
 .obs-task-name { font-weight: 700; }
 
