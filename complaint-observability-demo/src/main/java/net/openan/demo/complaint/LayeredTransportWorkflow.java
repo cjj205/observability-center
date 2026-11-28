@@ -115,7 +115,7 @@ final class LayeredTransportWorkflow {
             observe.metric("negotiation.rounds", 2,
                     Map.of("negotiation.id", negotiationId, "negotiation.result", "agreed"));
             observe.metric("negotiation.count", 1,
-                    Map.of("negotiation.id", negotiationId, "negotiation.result", "agreed"));
+                    Map.of("negotiation.result", "agreed"));
             negotiation.ok();
         }
     }
