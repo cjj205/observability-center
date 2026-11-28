@@ -66,6 +66,13 @@ function Get-TraceSpans {
                 Select-Object -First 1).value.stringValue
         foreach ($scopeSpan in @($resourceSpan.scopeSpans)) {
             foreach ($span in @($scopeSpan.spans)) {
+                $attributes = @{}
+                foreach ($attribute in @($span.attributes)) {
+                    $value = $attribute.value.stringValue
+                    if ($null -eq $value) { $value = $attribute.value.intValue }
+                    if ($null -eq $value) { $value = $attribute.value.boolValue }
+                    if ($null -ne $value) { $attributes[$attribute.key] = $value }
+                }
                 $spans.Add([pscustomobject]@{
                         traceId = [string]$span.traceId
                         spanId = [string]$span.spanId
@@ -73,6 +80,7 @@ function Get-TraceSpans {
                         name = [string]$span.name
                         kind = $span.kind
                         serviceName = [string]$serviceName
+                        attributes = $attributes
                     })
             }
         }
@@ -105,6 +113,46 @@ function Get-TraceVerification {
     $sendMessageSpans = @($spans | Where-Object { $_.name -eq 'SendMessage' })
     $rootIds = @($rootWorkflowSpans | ForEach-Object { $_.spanId })
     $rootToSendMessage = @($sendMessageSpans | Where-Object { $rootIds -contains $_.parentSpanId })
+    $transportWorkflows = @($workflowSpans | Where-Object { $_.serviceName -eq 'complaint-transport' })
+    $transportWorkflowParents = @(
+        foreach ($workflowSpan in $transportWorkflows) {
+            if ($spanIds.ContainsKey($workflowSpan.parentSpanId)) {
+                $spans | Where-Object { $_.spanId -eq $workflowSpan.parentSpanId } | Select-Object -First 1
+            }
+        }
+    )
+    $transportWorkflowLinked = $transportWorkflows.Count -gt 0 -and @($transportWorkflowParents | Where-Object {
+            $_.name -eq 'SendMessage' -and $_.kind -eq 2 -and $_.serviceName -eq 'complaint-transport'
+        }).Count -eq $transportWorkflows.Count
+    $requiredInboundAttributes = @(
+        'gen_ai.agent.a2a.operation.name',
+        'gen_ai.agent.a2a.task_id',
+        'gen_ai.agent.a2a.context_id',
+        'gen_ai.agent.a2a.message_id',
+        'gen_ai.agent.a2a.role',
+        'gen_ai.agent.a2a.extensions',
+        'gen_ai.agent.a2a.parts.number',
+        'gen_ai.agent.a2a.transport',
+        'gen_ai.agent.a2a.protocol.version',
+        'gen_ai.agent.a2at.extension.name',
+        'gen_ai.agent.a2at.task.type',
+        'gen_ai.agent.a2at.task.object',
+        'gen_ai.agent.name',
+        'gen_ai.agent.version'
+    )
+    $transportInbound = @($sendMessageSpans | Where-Object {
+            $_.serviceName -eq 'complaint-transport' -and $_.kind -eq 2
+        })
+    $transportInboundWithCompleteAttributes = @(
+        foreach ($inboundSpan in $transportInbound) {
+            $missingAttributes = @($requiredInboundAttributes | Where-Object {
+                    -not $inboundSpan.attributes.ContainsKey($_)
+                })
+            if ($missingAttributes.Count -eq 0) { $inboundSpan }
+        }
+    )
+    $transportInboundAttributesComplete = $transportInbound.Count -gt 0 `
+        -and $transportInboundWithCompleteAttributes.Count -eq $transportInbound.Count
     $valid = $spans.Count -gt 0 `
         -and $traceIds.Count -eq 1 `
         -and $workflowSpans.Count -gt 0 `
@@ -112,7 +160,9 @@ function Get-TraceVerification {
         -and $stepSpans.Count -gt 0 `
         -and $sendMessageSpans.Count -gt 0 `
         -and $parentFailures.Count -eq 0 `
-        -and $rootToSendMessage.Count -gt 0
+        -and $rootToSendMessage.Count -gt 0 `
+        -and $transportWorkflowLinked `
+        -and $transportInboundAttributesComplete
     return [pscustomobject]@{
         valid = $valid
         traceIds = $traceIds
@@ -125,6 +175,11 @@ function Get-TraceVerification {
         parentClosureFailures = $parentFailures
         rootWorkflowSpanIds = $rootIds
         rootToSendMessageCount = $rootToSendMessage.Count
+        transportWorkflowCount = $transportWorkflows.Count
+        transportWorkflowLinked = $transportWorkflowLinked
+        transportInboundSpanCount = $transportInbound.Count
+        transportInboundAttributesComplete = $transportInboundAttributesComplete
+        requiredTransportInboundAttributes = $requiredInboundAttributes
         spans = $spans
     }
 }

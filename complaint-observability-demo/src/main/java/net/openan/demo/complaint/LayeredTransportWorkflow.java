@@ -29,7 +29,12 @@ import dev.openan.workflow.engine.model.Workflow;
 import dev.openan.workflow.engine.runner.ExecutePsop;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.LinkedHashMap;
 import java.util.Map;
+import net.openan.a2at.sdk.negotiation.runtime.helper.NegotiationPayloadMapper;
+import net.openan.observability.LogSeverity;
+import net.openan.observability.ObservationSpan;
+import net.openan.observability.SignalKind;
 import net.openan.observability.Observability;
 
 /** Executes the Transport-view PSOP after WAIMO dispatches a diagnosis task. */
@@ -54,6 +59,7 @@ final class LayeredTransportWorkflow {
         String runId = String.valueOf(request.metadata().getOrDefault("demo.run_id", "unknown"));
         try {
             Workflow workflow = load();
+            emitInformationNegotiation(runId);
             ExecutionResult result = ExecutePsop.builder()
                     .psop(workflow)
                     .engineClient(client)
@@ -80,6 +86,37 @@ final class LayeredTransportWorkflow {
                     .failureCode("transport.workflow_error")
                     .failureMessage(error.getMessage())
                     .build();
+        }
+    }
+
+    private void emitInformationNegotiation(String runId) {
+        Map<String, Object> payload = taskT.startInformationNegotiation(
+                "A端诊断缺少cvlan和子接口信息，请补充。", Map.of("site", "A", "issue", "missing-cvlan"));
+        Map<String, Object> context = NegotiationPayloadMapper.extractContextMap(payload);
+        String negotiationId = String.valueOf(context.get("negotiationId"));
+        Map<String, Object> propose = Map.of(
+                "extension.name", "negotiation-t",
+                "negotiation.id", negotiationId,
+                "negotiation.round", context.get("round"),
+                "negotiation.total_rounds", 2,
+                "negotiation.max_rounds", 3,
+                "negotiation.performative", "propose",
+                "negotiation.result", "in-progress");
+        try (ObservationSpan negotiation = observe.trace(
+                "SendStreamingMessage-negotiation", SignalKind.SERVER, propose)) {
+            observe.log("gen_ai.agent.a2at.message", LogSeverity.INFO,
+                    "West-GD NETSpirit requested cvlan and subinterface details", propose, negotiation);
+            Map<String, Object> accepted = new LinkedHashMap<>(propose);
+            accepted.put("negotiation.round", 2);
+            accepted.put("negotiation.performative", "accept");
+            accepted.put("negotiation.result", "agreed");
+            observe.log("gen_ai.agent.a2at.message", LogSeverity.INFO,
+                    "Transport Complaint Agent supplied cvlan=409 and accepted the diagnosis continuation", accepted, negotiation);
+            observe.metric("negotiation.rounds", 2,
+                    Map.of("negotiation.id", negotiationId, "negotiation.result", "agreed"));
+            observe.metric("negotiation.count", 1,
+                    Map.of("negotiation.id", negotiationId, "negotiation.result", "agreed"));
+            negotiation.ok();
         }
     }
 

@@ -52,18 +52,26 @@ final class ComplaintControlPoint implements ControlPoint {
     @Override
     public CompletableFuture<MessageContent> onTask(TaskRequest request) {
         return CompletableFuture.supplyAsync(() -> {
-            MetadataContent encoded = taskT.encode(request.getInstruction());
+            MetadataContent encoded = taskT.encodeForSkill(request.getSkill(), request.getInstruction());
             Map<String, Object> metadata = new LinkedHashMap<>(encoded.buildMetadataContent());
             metadata.put("demo.run_id", runId);
             metadata.put("demo.task_id", request.getTaskId());
             metadata.put("demo.step", request.getStepName());
             metadata.put("demo.skill", request.getSkill());
             metadata.put("demo.agent", request.getAgentName());
+            metadata.put("demo.extension.name", extensionName(request.getSkill()));
             return new MessageContent(
                     List.of(new TextPart(encoded.promptText())),
                     metadata,
                     Set.of(encoded.extensionUri()));
         });
+    }
+
+    private static String extensionName(String skill) {
+        if (skill.contains("Authorization")) return "authorization-t";
+        if (skill.contains("Notification") || skill.equals("Restoration Result Reply")
+                || skill.equals("Root Cause Summarization")) return "notification-t";
+        return "task-t";
     }
 
     @Override

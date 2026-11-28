@@ -102,11 +102,7 @@
       "next": [
         {
           "step": "step8",
-          "condition": "授权校验不通过且需要动网授权"
-        },
-        {
-          "step": "step6",
-          "condition": "授权校验通过"
+          "condition": "需要创建动网授权策略"
         }
       ]
     },
