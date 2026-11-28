@@ -5,7 +5,7 @@
   "created_at": "2026-11-25T11:21:39.277607",
   "steps": [
     {
-      "name": "step1",
+      "name": "投诉受理",
       "type": "AllSuccess",
       "subtasks": [
         {
@@ -18,13 +18,13 @@
       ],
       "next": [
         {
-          "step": "step2",
+          "step": "投诉识别",
           "condition": ""
         }
       ]
     },
     {
-      "name": "step2",
+      "name": "投诉识别",
       "type": "AllSuccess",
       "subtasks": [
         {
@@ -37,13 +37,13 @@
       ],
       "next": [
         {
-          "step": "step3",
+          "step": "定界定位",
           "condition": ""
         }
       ]
     },
     {
-      "name": "step3",
+      "name": "定界定位",
       "type": "AllSuccess",
       "subtasks": [
         {
@@ -56,13 +56,13 @@
       ],
       "next": [
         {
-          "step": "step4",
+          "step": "检索传输智能体",
           "condition": "定界结论为传输大网线路问题"
         }
       ]
     },
     {
-      "name": "step4",
+      "name": "检索传输智能体",
       "type": "AllSuccess",
       "subtasks": [
         {
@@ -75,13 +75,13 @@
       ],
       "next": [
         {
-          "step": "step5",
+          "step": "投诉诊断处置",
           "condition": ""
         }
       ]
     },
     {
-      "name": "step5",
+      "name": "投诉诊断处置",
       "type": "AllSuccess",
       "subtasks": [
         {
@@ -94,17 +94,17 @@
       ],
       "next": [
         {
-          "step": "step6",
+          "step": "投诉报结",
           "condition": "Transport返回处置成功"
         },
         {
-          "step": "step7",
+          "step": "人工修复",
           "condition": "Transport返回授权失败或执行失败"
         }
       ]
     },
     {
-      "name": "step6",
+      "name": "投诉报结",
       "type": "AllSuccess",
       "subtasks": [
         {
@@ -123,7 +123,7 @@
       ]
     },
     {
-      "name": "step7",
+      "name": "人工修复",
       "type": "AllSuccess",
       "subtasks": [
         {
@@ -136,7 +136,7 @@
       ],
       "next": [
         {
-          "step": "step6",
+          "step": "投诉报结",
           "condition": "人工修复完成"
         }
       ]

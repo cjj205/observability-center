@@ -5,7 +5,7 @@
   "created_at": "2026-11-25T11:21:39.277607",
   "steps": [
     {
-      "name": "step1",
+      "name": "数据关联",
       "type": "AllSuccess",
       "subtasks": [
         {
@@ -18,13 +18,13 @@
       ],
       "next": [
         {
-          "step": "step2",
+          "step": "检索网络智能体",
           "condition": ""
         }
       ]
     },
     {
-      "name": "step2",
+      "name": "检索网络智能体",
       "type": "AllSuccess",
       "subtasks": [
         {
@@ -37,13 +37,13 @@
       ],
       "next": [
         {
-          "step": "step3",
+          "step": "双侧根因定位",
           "condition": ""
         }
       ]
     },
     {
-      "name": "step3",
+      "name": "双侧根因定位",
       "type": "AllSuccess",
       "subtasks": [
         {
@@ -63,13 +63,13 @@
       ],
       "next": [
         {
-          "step": "step4",
+          "step": "根因总结",
           "condition": ""
         }
       ]
     },
     {
-      "name": "step4",
+      "name": "根因总结",
       "type": "AllSuccess",
       "subtasks": [
         {
@@ -82,13 +82,13 @@
       ],
       "next": [
         {
-          "step": "step7",
+          "step": "授权校验",
           "condition": ""
         }
       ]
     },
     {
-      "name": "step7",
+      "name": "授权校验",
       "type": "AllSuccess",
       "subtasks": [
         {
@@ -101,13 +101,13 @@
       ],
       "next": [
         {
-          "step": "step8",
+          "step": "动网操作授权",
           "condition": "需要创建动网授权策略"
         }
       ]
     },
     {
-      "name": "step8",
+      "name": "动网操作授权",
       "type": "AllSuccess",
       "subtasks": [
         {
@@ -120,17 +120,17 @@
       ],
       "next": [
         {
-          "step": "step6",
+          "step": "抢通方案上报",
           "condition": "授权成功"
         },
         {
-          "step": "step10",
+          "step": "失败结果上报",
           "condition": "授权失败或授权被拒绝"
         }
       ]
     },
     {
-      "name": "step6",
+      "name": "抢通方案上报",
       "type": "AllSuccess",
       "subtasks": [
         {
@@ -143,13 +143,13 @@
       ],
       "next": [
         {
-          "step": "step9",
+          "step": "抢通执行",
           "condition": ""
         }
       ]
     },
     {
-      "name": "step9",
+      "name": "抢通执行",
       "type": "AllSuccess",
       "subtasks": [
         {
@@ -162,17 +162,17 @@
       ],
       "next": [
         {
-          "step": "step11",
+          "step": "抢通结果上报",
           "condition": "修复动作执行成功"
         },
         {
-          "step": "step10",
+          "step": "失败结果上报",
           "condition": "修复动作执行失败"
         }
       ]
     },
     {
-      "name": "step11",
+      "name": "抢通结果上报",
       "type": "AllSuccess",
       "subtasks": [
         {
@@ -185,13 +185,13 @@
       ],
       "next": [
         {
-          "step": "step12",
+          "step": "修复验证",
           "condition": ""
         }
       ]
     },
     {
-      "name": "step12",
+      "name": "修复验证",
       "type": "AllSuccess",
       "subtasks": [
         {
@@ -204,17 +204,17 @@
       ],
       "next": [
         {
-          "step": "step13",
+          "step": "验证结果回复",
           "condition": "SLA指标恢复正常"
         },
         {
-          "step": "step10",
+          "step": "失败结果上报",
           "condition": "SLA指标未恢复且仍支持重新处置"
         }
       ]
     },
     {
-      "name": "step13",
+      "name": "验证结果回复",
       "type": "AllSuccess",
       "subtasks": [
         {
@@ -233,7 +233,7 @@
       ]
     },
     {
-      "name": "step10",
+      "name": "失败结果上报",
       "type": "AllSuccess",
       "subtasks": [
         {
