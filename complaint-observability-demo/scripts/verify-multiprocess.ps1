@@ -75,7 +75,7 @@ if ($Case -eq 'success') {
     if (@($eastRecords | Where-Object { $_.step -eq 'step3' -and $_.status -eq 'completed' }).Count -ne 1) {
         $failures.Add('East OMC diagnosis record is missing')
     }
-    foreach ($step in @('step7', 'step9')) {
+    foreach ($step in @('step7', 'step8', 'step9')) {
         if (@($westRecords | Where-Object { $_.step -eq $step -and $_.status -eq 'completed' }).Count -ne 1) {
             $failures.Add("Selected OMC step did not complete: $step")
         }
@@ -85,7 +85,7 @@ if ($Case -eq 'success') {
     if ($history.Count -ne 5) { $failures.Add("expected 5 history entries, got $($history.Count)") }
     if (-not ($history.step -contains 'step5')) { $failures.Add('failed dispatch step is missing') }
     if ($history.step -contains 'step6' -or $history.step -contains 'step7') { $failures.Add('downstream steps ran after authorization denial') }
-    if (@($westRecords | Where-Object { $_.step -eq 'step7' -and $_.status -eq 'failed' -and $_.errorCode -eq 'authorization.denied' }).Count -ne 1) {
+    if (@($westRecords | Where-Object { $_.step -eq 'step8' -and $_.status -eq 'failed' -and $_.errorCode -eq 'authorization.denied' }).Count -ne 1) {
         $failures.Add('Selected OMC authorization denial record is missing')
     }
     if (@($transportRecords | Where-Object { $_.step -in @('step6', 'step9', 'step11', 'step12', 'step13') }).Count -ne 0) {

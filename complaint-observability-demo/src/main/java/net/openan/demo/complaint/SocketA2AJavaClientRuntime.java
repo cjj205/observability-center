@@ -173,15 +173,9 @@ final class SocketA2AJavaClientRuntime implements A2AJavaClientRuntime {
         Map<String, Object> metadata = params.message() == null || params.message().metadata() == null
                 ? Map.of()
                 : params.message().metadata();
-        Map<String, Object> attributes = new LinkedHashMap<>();
-        attributes.put("operation.name", "SendMessage");
-        attributes.put("extension.name", "task-t");
-        attributes.put("task.type", String.valueOf(metadata.getOrDefault("demo.skill", "unknown")));
-        attributes.put("task.object", String.valueOf(metadata.getOrDefault("demo.step", "unknown")));
+        Map<String, Object> attributes = new LinkedHashMap<>(A2AObservationAttributes.outbound(agentCard, params));
+        addExtensionAttributes(attributes, metadata);
         String taskId = String.valueOf(metadata.getOrDefault("demo.task_id", "unknown"));
-        attributes.put("task_id", taskId);
-        attributes.put("context_id", params.message() == null ? "unknown" : params.message().contextId());
-        attributes.put("gen_ai.agent.name", agentCard.name());
         if (!Span.current().getSpanContext().isValid()) {
             ObservationSpan parent = traceParents == null ? traceParent : traceParents.find(taskId);
             if (parent != null) {
@@ -189,6 +183,34 @@ final class SocketA2AJavaClientRuntime implements A2AJavaClientRuntime {
             }
         }
         return observe.trace("SendMessage", SignalKind.CLIENT, attributes);
+    }
+
+    private static void addExtensionAttributes(Map<String, Object> attributes, Map<String, Object> metadata) {
+        String extension = String.valueOf(metadata.getOrDefault("demo.extension.name", "task-t"));
+        attributes.put("extension.name", extension);
+        String skill = String.valueOf(metadata.getOrDefault("demo.skill", "unknown"));
+        if ("authorization-t".equals(extension)) {
+            attributes.put("authorization.stage", skill.endsWith("Request") ? "execute" : "preauthorize");
+            attributes.put("authorization.policy.operation.type", "tunnel-optimization");
+            return;
+        }
+        if ("notification-t".equals(extension)) {
+            attributes.put("notification.topic", notificationTopic(skill));
+            attributes.put("push.notification.url", "https://notification.demo.local/complaints/"
+                    + metadata.getOrDefault("demo.run_id", "unknown"));
+            return;
+        }
+        A2AObservationAttributes.addTaskT(attributes, metadata);
+    }
+
+    private static String notificationTopic(String skill) {
+        return switch (skill) {
+            case "Root Cause Summarization" -> "root-cause.reported";
+            case "Restoration Plan Notification" -> "restoration-plan.reported";
+            case "Restoration Notification" -> "restoration-result.reported";
+            case "Restoration Result Reply" -> "sla-verification.reported";
+            default -> "complaint.update";
+        };
     }
 
     private static void addResponseEvent(

@@ -569,7 +569,7 @@ final class HttpMockAgentServer implements AutoCloseable {
             Map<String, String> headers = requestHeaders(context);
             SendMessageResult result;
             try (var scope = TraceContextPropagation.extractToCurrent(headers, HEADER_GETTER)) {
-                result = router.dispatch(agentName, content);
+                result = router.dispatchInbound(agentName, content, A2AObservationAttributes.inbound(agentName, message));
             }
             boolean success = result.getFailureCode() == null;
             String text = responseText(result);
